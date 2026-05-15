@@ -3,6 +3,7 @@ import cors from "cors";
 import health from "./routes/health";
 import auth from "./routes/auth";
 import invoices from "./routes/invoices";
+import reminders from "./routes/reminders";
 import { errorHandler } from "./middleware/errorHandler";
 import { ApiError } from "./utils/ApiError";
 
@@ -24,6 +25,7 @@ app.get("/", (_, res) => {
 app.use("/health", health);
 app.use("/api/auth", auth);
 app.use("/api/invoices", invoices);
+app.use("/api/reminders", reminders);
 
 // 404 Handler - Catch-all for undefined routes
 app.use((req, _res, next) => {

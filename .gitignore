@@ -37,3 +37,5 @@ coverage/
 
 # Database
 backend/data.db
+backend/data.db-wal
+backend/data.db-shm
