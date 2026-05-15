@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "noEmit": false,
+    "noEmit": true,
     "types": ["node"],
     "resolveJsonModule": true
   },
