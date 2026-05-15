@@ -34,3 +34,6 @@ coverage/
 
 # Misc
 .eslintcache
+
+# Database
+backend/data.db

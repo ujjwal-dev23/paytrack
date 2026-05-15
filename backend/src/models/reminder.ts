@@ -1,0 +1,5 @@
+export interface Reminder {
+  id: number;
+  sent_on: string;
+  invoice_id: number;
+}
