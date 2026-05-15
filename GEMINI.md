@@ -18,6 +18,7 @@ The project uses a monorepo structure managed by **pnpm**.
   - **`src/middleware/`**: Express middlewares (Auth, Error handling).
   - **`src/models/`**: Data schemas and types.
   - **`src/routes/`**: API endpoint definitions and their logic.
+  - **`src/utils/`**: Shared utility classes and functions (e.g., ApiError).
 
 ## Technology Stack
 
