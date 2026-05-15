@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+pnpm-lock.yaml
+.git
+public/
+# Ignore build artifacts from packages
+**/dist
+**/build
