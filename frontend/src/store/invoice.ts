@@ -11,6 +11,8 @@ export interface Invoice {
   due_date: string;
   status: InvoiceStatus;
   created_on: string;
+  customer_name?: string;
+  customer_email?: string;
 }
 
 interface ApiResponse<T> {
@@ -62,6 +64,17 @@ export const updateInvoiceStatus = async (id: number, status: InvoiceStatus) => 
   });
   if (response.status === "success") {
     invoices.value = invoices.value.map((inv) => (inv.id === id ? response.data.invoice : inv));
+  }
+};
+
+export const updateInvoice = async (id: number, data: Partial<Invoice>) => {
+  const response = await apiFetch<ApiResponse<{ invoice: Invoice }>>(`/invoices/${id}`, {
+    method: "PATCH",
+    data,
+  });
+  if (response.status === "success") {
+    invoices.value = invoices.value.map((inv) => (inv.id === id ? response.data.invoice : inv));
+    return response.data.invoice;
   }
 };
 

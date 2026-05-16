@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { updateInvoiceStatus, deleteInvoice } from "../store/invoice";
+import { updateInvoiceStatus, deleteInvoice, updateInvoice } from "../store/invoice";
 import type { Invoice } from "../store/invoice";
 import { sendReminder } from "../store/reminder";
 import { Button } from "./Button";
@@ -10,6 +10,8 @@ interface InvoiceItemProps {
 
 export function InvoiceItem({ invoice }: InvoiceItemProps) {
   const [loading, setLoading] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [newDueDate, setNewDueDate] = useState(invoice.due_date.split("T")[0]);
 
   const handleStatusToggle = async () => {
     const nextStatus = invoice.status === "paid" ? "pending" : "paid";
@@ -28,6 +30,18 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
     }
   };
 
+  const handleDueDateUpdate = async () => {
+    setLoading(true);
+    try {
+      await updateInvoice(invoice.id, { due_date: newDueDate });
+      setIsEditingDate(false);
+    } catch (_err) {
+      alert("Failed to update due date");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const statusColors = {
     paid: "bg-green-100 text-green-700",
     pending: "bg-yellow-100 text-yellow-700",
@@ -35,47 +49,114 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
   };
 
   return (
-    <div className="card group hover:border-primary flex items-center justify-between transition-colors">
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold">${invoice.amount}</span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${statusColors[invoice.status]}`}
-          >
-            {invoice.status}
+    <div className="card group hover:border-primary flex flex-col gap-4 transition-colors p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold">${invoice.amount.toFixed(2)}</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${statusColors[invoice.status]}`}
+            >
+              {invoice.status}
+            </span>
+          </div>
+          <div className="mt-1 flex flex-col">
+            <span className="text-text-main text-sm font-medium">
+              {invoice.customer_name || "Unknown Customer"}
+            </span>
+            <span className="text-text-muted text-xs">{invoice.customer_email}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end">
+          {isEditingDate ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                className="input py-1 text-xs"
+                value={newDueDate}
+                onInput={(e) => setNewDueDate((e.target as HTMLInputElement).value)}
+              />
+              <button
+                onClick={handleDueDateUpdate}
+                disabled={loading}
+                className="text-primary text-xs font-bold hover:underline"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setIsEditingDate(false)}
+                className="text-text-muted text-xs hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <span className="text-text-muted text-xs">
+                Due: {new Date(invoice.due_date).toLocaleDateString()}
+              </span>
+              <button
+                onClick={() => setIsEditingDate(true)}
+                className="text-text-muted group-hover:text-primary p-1 transition-colors"
+                title="Change Due Date"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
+          <span className="text-text-muted mt-1 text-[10px]">
+            Created: {new Date(invoice.created_on).toLocaleDateString()}
           </span>
         </div>
-        <span className="text-text-muted mt-1 text-xs">
-          Due: {new Date(invoice.due_date).toLocaleDateString()}
-        </span>
       </div>
 
-      <div className="flex gap-2">
-        {invoice.status !== "paid" && (
+      <div className="border-border flex items-center justify-between border-t pt-3">
+        <div className="flex gap-2">
           <Button
-            variant="secondary"
-            className="h-auto px-2 py-1 text-[10px]"
-            onClick={handleSendReminder}
+            variant={invoice.status === "paid" ? "secondary" : "primary"}
+            className="h-auto px-3 py-1.5 text-xs"
+            onClick={handleStatusToggle}
             isLoading={loading}
           >
-            Remind
+            {invoice.status === "paid" ? "Mark Pending" : "Mark Paid"}
           </Button>
-        )}
-        <Button
-          variant="secondary"
-          className="h-auto px-2 py-1 text-[10px]"
-          onClick={handleStatusToggle}
-        >
-          {invoice.status === "paid" ? "Mark Pending" : "Mark Paid"}
-        </Button>
+          {invoice.status !== "paid" && (
+            <Button
+              variant="secondary"
+              className="h-auto px-3 py-1.5 text-xs"
+              onClick={handleSendReminder}
+              isLoading={loading}
+            >
+              Send Reminder
+            </Button>
+          )}
+        </div>
         <button
-          onClick={() => deleteInvoice(invoice.id)}
-          className="text-text-muted rounded-custom p-1 transition-colors hover:text-red-500"
-          title="Delete"
+          onClick={() => {
+            if (confirm("Are you sure you want to delete this invoice?")) {
+              deleteInvoice(invoice.id);
+            }
+          }}
+          className="text-text-muted rounded-custom p-2 transition-colors hover:bg-red-50 hover:text-red-500"
+          title="Delete Invoice"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

@@ -17,9 +17,24 @@ router.use(protect);
  */
 router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const today = new Date().toISOString().split("T")[0];
+
+    // Automatically mark past due pending invoices as overdue
+    db.prepare(`
+      UPDATE invoices
+      SET status = 'overdue'
+      WHERE user_id = ? AND status = 'pending' AND due_date < ?
+    `).run(req.user!.id, today);
+
     const invoices = db
-      .prepare("SELECT * FROM invoices WHERE user_id = ? ORDER BY created_on DESC")
-      .all(req.user!.id) as Invoice[];
+      .prepare(`
+        SELECT i.*, c.username as customer_name, c.email as customer_email
+        FROM invoices i
+        LEFT JOIN customers c ON i.customer_id = c.id
+        WHERE i.user_id = ? 
+        ORDER BY i.created_on DESC
+      `)
+      .all(req.user!.id) as (Invoice & { customer_name: string; customer_email: string })[];
 
     res.status(200).json({
       status: "success",
@@ -39,8 +54,13 @@ router.get("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
   try {
-    const invoice = db.prepare("SELECT * FROM invoices WHERE id = ?").get(id) as
-      | Invoice
+    const invoice = db.prepare(`
+      SELECT i.*, c.username as customer_name, c.email as customer_email
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      WHERE i.id = ?
+    `).get(id) as
+      | (Invoice & { customer_name: string; customer_email: string })
       | undefined;
 
     if (!invoice) {
@@ -81,11 +101,17 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
       return next(new ApiError(400, "Invalid customer_id or customer does not belong to you"));
     }
 
+    const today = new Date().toISOString().split("T")[0];
+    let finalStatus = status || "pending";
+    if (finalStatus === "pending" && due_date < today) {
+      finalStatus = "overdue";
+    }
+
     const stmt = db.prepare(
       "INSERT INTO invoices (amount, user_id, customer_id, due_date, status) VALUES (?, ?, ?, ?, ?)",
     );
 
-    const info = stmt.run(amount, req.user!.id, customer_id, due_date, status || "pending");
+    const info = stmt.run(amount, req.user!.id, customer_id, due_date, finalStatus);
 
     const newInvoice: Invoice = {
       id: Number(info.lastInsertRowid),
@@ -93,7 +119,7 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
       user_id: req.user!.id,
       customer_id,
       due_date,
-      status: (status as InvoiceStatus) || "pending",
+      status: finalStatus as InvoiceStatus,
       created_on: new Date().toISOString(), // This is a fallback, DB uses CURRENT_TIMESTAMP
     };
 
@@ -151,6 +177,14 @@ router.patch("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
     `);
 
     stmt.run(amount, customer_id, due_date, status, id);
+
+    // 3. Auto-update to overdue if needed after update
+    const today = new Date().toISOString().split("T")[0];
+    db.prepare(`
+      UPDATE invoices
+      SET status = 'overdue'
+      WHERE id = ? AND status = 'pending' AND due_date < ?
+    `).run(id, today);
 
     const updatedInvoice = db.prepare("SELECT * FROM invoices WHERE id = ?").get(id) as Invoice;
 

@@ -23,6 +23,7 @@ The project uses a monorepo structure managed by **pnpm**.
 
 ## Technology Stack
 
+- **Node.js Version**: **v22.x** (Required for `better-sqlite3` compatibility)
 - **Package Manager**: pnpm (Workspaces)
 - **Frontend Framework**: [Preact](https://preactjs.com/)
 - **State Management**: [@preact/signals](https://preactjs.com/guide/v10/signals)
@@ -37,12 +38,15 @@ The project uses a monorepo structure managed by **pnpm**.
 ### Environment Setup
 
 1.  Ensure [pnpm](https://pnpm.io/) is installed.
-2.  Install dependencies from the root:
+2.  Install Node.js **v22** (e.g., `fnm use 22`).
+3.  Install dependencies from the root:
     ```bash
     pnpm install
     ```
 
 ### Common Commands
+
+> **Note**: Always switch to Node 22 before running backend commands (e.g., `fnm use 22`).
 
 - **Frontend Development**: Run the dev server.
   ```bash

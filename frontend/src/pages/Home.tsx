@@ -1,6 +1,6 @@
 import { useState, useEffect } from "preact/hooks";
 import { fetchInvoices, invoices, isInvoiceLoading } from "../store/invoice";
-import { fetchReminders, reminders } from "../store/reminder";
+import { fetchReminders } from "../store/reminder";
 import { user, isAuthenticated } from "../store/auth";
 import { Button } from "../components/Button";
 import { InvoiceItem } from "../components/InvoiceItem";
@@ -41,6 +41,12 @@ export default function Home() {
     );
   }
 
+  const sortedInvoices = [...invoices.value].sort((a, b) => {
+    if (a.status === "paid" && b.status !== "paid") return 1;
+    if (a.status !== "paid" && b.status === "paid") return -1;
+    return new Date(b.created_on).getTime() - new Date(a.created_on).getTime();
+  });
+
   return (
     <div className="animate-in fade-in space-y-8 duration-500">
       <header className="flex items-center justify-between">
@@ -63,16 +69,19 @@ export default function Home() {
           </p>
         </div>
         <div className="card text-center">
-          <span className="text-primary text-3xl font-bold">{reminders.value.length}</span>
+          <span className="text-primary text-3xl font-bold">
+            {invoices.value.filter((i) => i.status !== "paid").length}
+          </span>
           <p className="text-text-muted mt-1 text-xs font-semibold tracking-wider uppercase">
-            Reminders Sent
+            Unpaid Invoices
           </p>
         </div>
       </div>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-bold">Recent Invoices</h2>
+          <h2 className="text-lg font-bold">Invoice Management</h2>
+          <div className="text-text-muted text-xs">Sorted by unpaid status</div>
         </div>
 
         {isInvoiceLoading.value && invoices.value.length === 0 ? (
@@ -87,8 +96,8 @@ export default function Home() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {invoices.value.map((invoice) => (
+          <div className="grid gap-4 md:grid-cols-1">
+            {sortedInvoices.map((invoice) => (
               <InvoiceItem key={invoice.id} invoice={invoice} />
             ))}
           </div>
