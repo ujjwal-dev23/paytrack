@@ -17,6 +17,11 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
   const [newAmount, setNewAmount] = useState(invoice.amount.toString());
 
   const handleStatusToggle = async () => {
+    if (invoice.status === "paid") {
+      const confirmed = confirm("Are you sure you want to mark this paid invoice as pending?");
+      if (!confirmed) return;
+    }
+
     const nextStatus = invoice.status === "paid" ? "pending" : "paid";
     await updateInvoiceStatus(invoice.id, nextStatus);
   };
