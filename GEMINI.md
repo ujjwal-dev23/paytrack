@@ -14,6 +14,7 @@ The project uses a monorepo structure managed by **pnpm**.
   - **`src/hooks/`**: Custom Preact hooks.
   - **`src/pages/`**: View components for specific routes.
   - **`src/services/`**: API calls and shared business logic.
+  - **`src/store/`**: Global state management using Preact Signals.
 - **`backend/`**: Express.js server focused on simplicity.
   - **`src/middleware/`**: Express middlewares (Auth, Error handling).
   - **`src/models/`**: Data schemas and types.
@@ -24,6 +25,7 @@ The project uses a monorepo structure managed by **pnpm**.
 
 - **Package Manager**: pnpm (Workspaces)
 - **Frontend Framework**: [Preact](https://preactjs.com/)
+- **State Management**: [@preact/signals](https://preactjs.com/guide/v10/signals)
 - **Build Tool**: [Vite](https://vitejs.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) (using the `@tailwindcss/vite` plugin)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
@@ -64,6 +66,12 @@ The project uses a monorepo structure managed by **pnpm**.
   ```
 
 ## Engineering Standards & Conventions
+
+### State Management
+
+- Use **Preact Signals** for global state.
+- Define signals and actions in `frontend/src/store/`.
+- Access signals directly in components via `.value`.
 
 ### Linting & Code Style
 

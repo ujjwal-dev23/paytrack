@@ -81,6 +81,9 @@ importers:
 
   frontend:
     dependencies:
+      '@preact/signals':
+        specifier: ^2.9.0
+        version: 2.9.0(preact@10.29.1)
       preact:
         specifier: ^10.29.1
         version: 10.29.1
@@ -456,6 +459,14 @@ packages:
     peerDependencies:
       '@babel/core': 7.x
       vite: 2.x || 3.x || 4.x || 5.x || 6.x || 7.x || 8.x
+
+  '@preact/signals-core@1.14.2':
+    resolution: {integrity: sha512-RZHdBj9ZF4n40Rp4jS052EHHjBWf96P9oNdXPfhQTovCuWY9iQn3Gq+gOTJSgBO9A/JBuPfMOWsSX/lIU9Pc/A==}
+
+  '@preact/signals@2.9.0':
+    resolution: {integrity: sha512-hYrY0KyUqkDgOl1qba/JGn6y81pXnurn21PMaxfcMwdncdZ3M/oVdmpTvEnsGjh48dIwDVc7bjWHqIsngSjYug==}
+    peerDependencies:
+      preact: '>= 10.25.0 || >=11.0.0-0'
 
   '@prefresh/babel-plugin@0.5.3':
     resolution: {integrity: sha512-57LX2SHs4BX2s1IwCjNzTE2OJeEepRCNf1VTEpbNcUyHfMO68eeOWGDIt4ob9aYlW6PEWZ1SuwNikuoIXANDtQ==}
@@ -2579,6 +2590,13 @@ snapshots:
       - preact
       - rollup
       - supports-color
+
+  '@preact/signals-core@1.14.2': {}
+
+  '@preact/signals@2.9.0(preact@10.29.1)':
+    dependencies:
+      '@preact/signals-core': 1.14.2
+      preact: 10.29.1
 
   '@prefresh/babel-plugin@0.5.3': {}
 
