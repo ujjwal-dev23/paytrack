@@ -25,7 +25,7 @@ export function Navbar() {
 
   return (
     <nav className="bg-card border-border sticky top-0 z-10 border-b">
-      <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4">
         <a href="/" className="text-primary text-lg font-bold">
           PayTrack
         </a>
