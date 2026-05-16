@@ -66,6 +66,9 @@ export const filters = signal({ status: "all", search: "", startDate: "", endDat
 
 // Actions
 export const fetchInvoices = async () => {
+  // Prevent concurrent fetches and redundant triggers
+  if (isInvoiceLoading.value) return;
+
   try {
     isInvoiceLoading.value = true;
     invoiceError.value = null;
@@ -86,9 +89,21 @@ export const fetchInvoices = async () => {
 
     if (response.status === "success") {
       invoices.value = response.data.invoices;
+      
+      // Atomic update of metadata only if they changed
       if (response.pagination) {
-        pagination.value = response.pagination;
+        const current = pagination.value;
+        const next = response.pagination;
+        if (
+          current.total !== next.total ||
+          current.totalPages !== next.totalPages ||
+          current.page !== next.page ||
+          current.limit !== next.limit
+        ) {
+          pagination.value = next;
+        }
       }
+      
       if (response.stats) {
         stats.value = response.stats;
       }

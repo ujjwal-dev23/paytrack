@@ -13,10 +13,15 @@ export default function InvoicesPage() {
 
   useEffect(() => {
     if (isAuthenticated.value) {
-      fetchInvoices();
       fetchReminders();
     }
-  }, [isAuthenticated.value, filters.value, pagination.value]);
+  }, [isAuthenticated.value]);
+
+  useEffect(() => {
+    if (isAuthenticated.value) {
+      fetchInvoices();
+    }
+  }, [isAuthenticated.value, filters.value, pagination.value.page]);
 
   if (!isAuthenticated.value) {
     return null; // Layout.tsx handles auth redirect/messaging if needed, or we just show nothing
