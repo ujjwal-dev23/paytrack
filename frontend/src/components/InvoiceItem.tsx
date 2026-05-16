@@ -70,48 +70,56 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
   };
 
   return (
-    <div className="card group hover:border-primary flex flex-col gap-4 p-4 transition-colors">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
+    <div className="card group hover:border-primary flex min-w-0 flex-col gap-4 overflow-hidden p-4 transition-colors">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-center gap-2 overflow-hidden">
             {isEditingAmount ? (
-              <div className="flex items-center gap-2">
-                <div className="relative">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="relative min-w-0 flex-1">
                   <span className="text-text-muted absolute inset-y-0 left-3 flex items-center text-sm">
                     {currency.value.symbol}
                   </span>
                   <input
                     type="number"
                     step="0.01"
-                    className="input w-32 py-1 pl-6 text-sm font-bold"
+                    min="0"
+                    className="input w-full min-w-[120px] py-1 pl-6 text-sm font-bold"
                     value={newAmount}
                     onInput={(e) => setNewAmount((e.target as HTMLInputElement).value)}
                     autoFocus
                   />
                 </div>
-                <button
-                  onClick={handleAmountUpdate}
-                  disabled={loading}
-                  className="text-primary text-xs font-bold hover:underline"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditingAmount(false);
-                    setNewAmount(invoice.amount.toString());
-                  }}
-                  className="text-text-muted text-xs hover:underline"
-                >
-                  Cancel
-                </button>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    onClick={handleAmountUpdate}
+                    disabled={loading}
+                    className="text-primary text-xs font-bold hover:underline"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingAmount(false);
+                      setNewAmount(invoice.amount.toString());
+                    }}
+                    className="text-text-muted text-xs hover:underline"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center gap-1">
-                <span className="text-xl font-bold">{formatAmount(invoice.amount)}</span>
+              <div className="flex min-w-0 items-center gap-1">
+                <span
+                  className="block truncate text-xl font-bold"
+                  title={formatAmount(invoice.amount)}
+                >
+                  {formatAmount(invoice.amount)}
+                </span>
                 <button
                   onClick={() => setIsEditingAmount(true)}
-                  className="text-text-muted group-hover:text-primary p-1 opacity-0 transition-colors group-hover:opacity-100"
+                  className="text-text-muted group-hover:text-primary shrink-0 p-1 opacity-0 transition-colors group-hover:opacity-100"
                   title="Edit Amount"
                 >
                   <svg
@@ -132,20 +140,25 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
               </div>
             )}
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${statusColors[invoice.status]}`}
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${statusColors[invoice.status]}`}
             >
               {invoice.status}
             </span>
           </div>
-          <div className="mt-1 flex flex-col">
-            <span className="text-text-main text-sm font-medium">
+          <div className="mt-1 flex min-w-0 flex-col">
+            <span
+              className="text-text-main truncate text-sm font-medium"
+              title={invoice.customer_name || "Unknown Customer"}
+            >
               {invoice.customer_name || "Unknown Customer"}
             </span>
-            <span className="text-text-muted text-xs">{invoice.customer_email}</span>
+            <span className="text-text-muted truncate text-xs" title={invoice.customer_email}>
+              {invoice.customer_email}
+            </span>
           </div>
         </div>
 
-        <div className="flex flex-col items-start sm:items-end">
+        <div className="flex shrink-0 flex-col items-start sm:items-end">
           {isEditingDate ? (
             <div className="flex items-center gap-2">
               <input

@@ -241,8 +241,12 @@ router.get("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
 router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
   const { amount, customer_id, due_date, status } = req.body;
 
-  if (!amount || !customer_id || !due_date) {
+  if (amount === undefined || amount === null || !customer_id || !due_date) {
     return next(new ApiError(400, "Please provide amount, customer_id, and due_date"));
+  }
+
+  if (Number(amount) < 0) {
+    return next(new ApiError(400, "Amount cannot be negative"));
   }
 
   try {
@@ -294,6 +298,10 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
 router.patch("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const { amount, customer_id, due_date, status } = req.body;
+
+  if (amount !== undefined && amount !== null && Number(amount) < 0) {
+    return next(new ApiError(400, "Amount cannot be negative"));
+  }
 
   try {
     // 1. Check if invoice exists and belongs to user

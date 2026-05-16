@@ -95,6 +95,7 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
         type="number"
         name="amount"
         step="0.01"
+        min="0"
         required
         placeholder="100.00"
         disabled={isCreatingCustomer}
