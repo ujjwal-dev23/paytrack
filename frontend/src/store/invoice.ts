@@ -21,18 +21,51 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+export interface PaginationMetadata {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface InvoiceStats {
+  total: number;
+  unpaid: number;
+}
+
 // Signals
 export const invoices = signal<Invoice[]>([]);
 export const isInvoiceLoading = signal(false);
 export const invoiceError = signal<string | null>(null);
+export const pagination = signal<PaginationMetadata>({ total: 0, page: 1, limit: 10, totalPages: 1 });
+export const stats = signal<InvoiceStats>({ total: 0, unpaid: 0 });
+export const filters = signal({ status: "all", search: "" });
 
 // Actions
 export const fetchInvoices = async () => {
   try {
     isInvoiceLoading.value = true;
-    const response = await apiFetch<ApiResponse<{ invoices: Invoice[] }>>("/invoices");
+    const { status, search } = filters.value;
+    const { page, limit } = pagination.value;
+
+    const queryParams = new URLSearchParams();
+    queryParams.append("page", page.toString());
+    queryParams.append("limit", limit.toString());
+    if (status && status !== "all") queryParams.append("status", status);
+    if (search) queryParams.append("search", search);
+
+    const response = await apiFetch<
+      ApiResponse<{ invoices: Invoice[] }> & { pagination: PaginationMetadata; stats: InvoiceStats }
+    >(`/invoices?${queryParams.toString()}`);
+
     if (response.status === "success") {
       invoices.value = response.data.invoices;
+      if (response.pagination) {
+        pagination.value = response.pagination;
+      }
+      if (response.stats) {
+        stats.value = response.stats;
+      }
     }
   } catch (err) {
     invoiceError.value = err instanceof Error ? err.message : "Failed to fetch invoices";

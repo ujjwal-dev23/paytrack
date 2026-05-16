@@ -11,7 +11,9 @@ interface InvoiceItemProps {
 export function InvoiceItem({ invoice }: InvoiceItemProps) {
   const [loading, setLoading] = useState(false);
   const [isEditingDate, setIsEditingDate] = useState(false);
+  const [isEditingAmount, setIsEditingAmount] = useState(false);
   const [newDueDate, setNewDueDate] = useState(invoice.due_date.split("T")[0]);
+  const [newAmount, setNewAmount] = useState(invoice.amount.toString());
 
   const handleStatusToggle = async () => {
     const nextStatus = invoice.status === "paid" ? "pending" : "paid";
@@ -42,6 +44,24 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
     }
   };
 
+  const handleAmountUpdate = async () => {
+    const amountNum = parseFloat(newAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await updateInvoice(invoice.id, { amount: amountNum });
+      setIsEditingAmount(false);
+    } catch (_err) {
+      alert("Failed to update amount");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const statusColors = {
     paid: "bg-green-100 text-green-700",
     pending: "bg-yellow-100 text-yellow-700",
@@ -53,7 +73,61 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold">${invoice.amount.toFixed(2)}</span>
+            {isEditingAmount ? (
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <span className="text-text-muted absolute inset-y-0 left-3 flex items-center text-sm">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="input w-32 py-1 pl-6 text-sm font-bold"
+                    value={newAmount}
+                    onInput={(e) => setNewAmount((e.target as HTMLInputElement).value)}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={handleAmountUpdate}
+                  disabled={loading}
+                  className="text-primary text-xs font-bold hover:underline"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingAmount(false);
+                    setNewAmount(invoice.amount.toString());
+                  }}
+                  className="text-text-muted text-xs hover:underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <span className="text-xl font-bold">${invoice.amount.toFixed(2)}</span>
+                <button
+                  onClick={() => setIsEditingAmount(true)}
+                  className="text-text-muted group-hover:text-primary p-1 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Edit Amount"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase ${statusColors[invoice.status]}`}
             >

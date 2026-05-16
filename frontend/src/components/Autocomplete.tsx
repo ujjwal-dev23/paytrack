@@ -147,7 +147,7 @@ export function Autocomplete({
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Add "{query}" as new customer
+                Add &quot;{query}&quot; as new customer
               </button>
             ) : (
               <div className="text-text-muted px-3 py-4 text-center text-sm">

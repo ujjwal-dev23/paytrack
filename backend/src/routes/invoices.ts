@@ -4,7 +4,7 @@ import { db } from "../db";
 import { ApiError } from "../utils/ApiError";
 import { protect } from "../middleware/auth";
 import type { AuthRequest } from "../middleware/auth";
-import type { Invoice, InvoiceStatus } from "../models";
+import type { Invoice } from "../models";
 
 const router = express.Router();
 
@@ -26,19 +26,71 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
       WHERE user_id = ? AND status = 'pending' AND due_date < ?
     `).run(req.user!.id, today);
 
-    const invoices = db
-      .prepare(`
-        SELECT i.*, c.username as customer_name, c.email as customer_email
-        FROM invoices i
-        LEFT JOIN customers c ON i.customer_id = c.id
-        WHERE i.user_id = ? 
-        ORDER BY i.created_on DESC
-      `)
-      .all(req.user!.id) as (Invoice & { customer_name: string; customer_email: string })[];
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+    const status = req.query.status as string;
+    const search = req.query.search as string;
+
+    let query = `
+      SELECT i.*, c.username as customer_name, c.email as customer_email
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      WHERE i.user_id = ?
+    `;
+    let countQuery = `
+      SELECT COUNT(*) as total
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      WHERE i.user_id = ?
+    `;
+
+    const queryParams: unknown[] = [req.user!.id];
+    const countParams: unknown[] = [req.user!.id];
+
+    if (status && status !== "all") {
+      query += ` AND i.status = ?`;
+      countQuery += ` AND i.status = ?`;
+      queryParams.push(status);
+      countParams.push(status);
+    }
+
+    if (search) {
+      query += ` AND (c.username LIKE ? OR c.email LIKE ?)`;
+      countQuery += ` AND (c.username LIKE ? OR c.email LIKE ?)`;
+      const searchParam = `%${search}%`;
+      queryParams.push(searchParam, searchParam);
+      countParams.push(searchParam, searchParam);
+    }
+
+    query += ` ORDER BY i.created_on DESC LIMIT ? OFFSET ?`;
+    queryParams.push(limit, offset);
+
+    const invoices = db.prepare(query).all(...queryParams) as (Invoice & { customer_name: string; customer_email: string })[];
+    const { total: filteredTotal } = db.prepare(countQuery).get(...countParams) as { total: number };
+
+    // Global stats (ignoring filters)
+    const globalStats = db.prepare(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status != 'paid' THEN 1 ELSE 0 END) as unpaid
+      FROM invoices 
+      WHERE user_id = ?
+    `).get(req.user!.id) as { total: number; unpaid: number };
 
     res.status(200).json({
       status: "success",
       results: invoices.length,
+      pagination: {
+        total: filteredTotal,
+        page,
+        limit,
+        totalPages: Math.ceil(filteredTotal / limit) || 1,
+      },
+      stats: {
+        total: globalStats.total,
+        unpaid: globalStats.unpaid || 0,
+      },
       data: { invoices },
     });
   } catch (error) {
@@ -113,15 +165,12 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
 
     const info = stmt.run(amount, req.user!.id, customer_id, due_date, finalStatus);
 
-    const newInvoice: Invoice = {
-      id: Number(info.lastInsertRowid),
-      amount,
-      user_id: req.user!.id,
-      customer_id,
-      due_date,
-      status: finalStatus as InvoiceStatus,
-      created_on: new Date().toISOString(), // This is a fallback, DB uses CURRENT_TIMESTAMP
-    };
+    const newInvoice = db.prepare(`
+      SELECT i.*, c.username as customer_name, c.email as customer_email
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      WHERE i.id = ?
+    `).get(info.lastInsertRowid) as (Invoice & { customer_name: string; customer_email: string });
 
     res.status(201).json({
       status: "success",
@@ -186,7 +235,12 @@ router.patch("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
       WHERE id = ? AND status = 'pending' AND due_date < ?
     `).run(id, today);
 
-    const updatedInvoice = db.prepare("SELECT * FROM invoices WHERE id = ?").get(id) as Invoice;
+    const updatedInvoice = db.prepare(`
+      SELECT i.*, c.username as customer_name, c.email as customer_email
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      WHERE i.id = ?
+    `).get(id) as (Invoice & { customer_name: string; customer_email: string });
 
     res.status(200).json({
       status: "success",
