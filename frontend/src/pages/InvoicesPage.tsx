@@ -8,6 +8,7 @@ import { InvoiceForm } from "../components/InvoiceForm";
 
 export default function InvoicesPage() {
   const [showForm, setShowForm] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated.value) {
@@ -20,14 +21,16 @@ export default function InvoicesPage() {
     return null; // Layout.tsx handles auth redirect/messaging if needed, or we just show nothing
   }
 
+  const hasActiveAdvancedFilters = !!(filters.value.startDate || filters.value.endDate);
+
   return (
     <div className="animate-in fade-in space-y-8 duration-500">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Invoices</h1>
           <p className="text-text-muted text-sm">Manage and track your payments.</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="text-sm">
+        <Button onClick={() => setShowForm(true)} className="w-full text-sm sm:w-auto">
           + New Invoice
         </Button>
       </header>
@@ -36,22 +39,75 @@ export default function InvoicesPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h2 className="text-lg font-bold">Invoice Management</h2>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search customers..."
-                className="input py-1.5 pl-8 text-xs"
-                value={filters.value.search}
-                onInput={(e) => {
+            <div className="flex flex-1 gap-2">
+              <div className="relative flex-1 sm:min-w-[240px]">
+                <input
+                  type="text"
+                  placeholder="Search customers..."
+                  className="input-field py-1.5 pl-8 text-xs"
+                  value={filters.value.search}
+                  onInput={(e) => {
+                    filters.value = {
+                      ...filters.value,
+                      search: (e.target as HTMLInputElement).value,
+                    };
+                    pagination.value = { ...pagination.value, page: 1 };
+                  }}
+                />
+                <svg
+                  className="text-text-muted absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className={`rounded-custom flex h-9 w-9 items-center justify-center border transition-all ${
+                  showAdvancedFilters || hasActiveAdvancedFilters
+                    ? "bg-primary border-primary text-white shadow-md"
+                    : "border-border text-text-muted hover:border-primary hover:text-primary bg-card"
+                }`}
+                title="Advanced Filters"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="relative w-full sm:w-36">
+              <select
+                className="input-field appearance-none py-1.5 pr-8 pl-3 text-xs"
+                value={filters.value.status}
+                onChange={(e) => {
+                  const target = e.target as HTMLSelectElement;
                   filters.value = {
                     ...filters.value,
-                    search: (e.target as HTMLInputElement).value,
+                    status: target.value,
                   };
                   pagination.value = { ...pagination.value, page: 1 };
+                  target.blur();
                 }}
-              />
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+              </select>
               <svg
-                className="text-text-muted absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+                className="text-text-muted pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -60,25 +116,97 @@ export default function InvoicesPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  d="M19 9l-7 7-7-7"
                 />
               </svg>
             </div>
-            <select
-              className="input w-full py-1.5 text-xs sm:w-32"
-              value={filters.value.status}
-              onChange={(e) => {
-                filters.value = { ...filters.value, status: (e.target as HTMLSelectElement).value };
-                pagination.value = { ...pagination.value, page: 1 };
-              }}
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="overdue">Overdue</option>
-            </select>
           </div>
         </div>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="bg-primary/5 rounded-custom border-primary/10 animate-in slide-in-from-top-2 border p-4 duration-200">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div className="flex-1 space-y-1.5">
+                <label className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
+                  From Date
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    className="input-field py-1.5 pl-8 text-xs"
+                    value={filters.value.startDate}
+                    onChange={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      filters.value = {
+                        ...filters.value,
+                        startDate: target.value,
+                      };
+                      pagination.value = { ...pagination.value, page: 1 };
+                      target.blur();
+                    }}
+                  />
+                  <svg
+                    className="text-text-muted absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1 space-y-1.5">
+                <label className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
+                  To Date
+                </label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    className="input-field py-1.5 pl-8 text-xs"
+                    value={filters.value.endDate}
+                    onChange={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      filters.value = {
+                        ...filters.value,
+                        endDate: target.value,
+                      };
+                      pagination.value = { ...pagination.value, page: 1 };
+                      target.blur();
+                    }}
+                  />
+                  <svg
+                    className="text-text-muted absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  filters.value = { ...filters.value, startDate: "", endDate: "" };
+                  pagination.value = { ...pagination.value, page: 1 };
+                }}
+                className="hover:text-primary-dark text-primary flex h-9 items-center px-4 text-xs font-bold transition-colors"
+              >
+                Clear Dates
+              </button>
+            </div>
+          </div>
+        )}
 
         {isInvoiceLoading.value && invoices.value.length === 0 ? (
           <div className="py-12 text-center">

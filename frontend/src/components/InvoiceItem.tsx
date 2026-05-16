@@ -71,7 +71,7 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
 
   return (
     <div className="card group hover:border-primary flex flex-col gap-4 p-4 transition-colors">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             {isEditingAmount ? (
@@ -145,7 +145,7 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
           </div>
         </div>
 
-        <div className="flex flex-col items-end">
+        <div className="flex flex-col items-start sm:items-end">
           {isEditingDate ? (
             <div className="flex items-center gap-2">
               <input
@@ -201,8 +201,8 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
         </div>
       </div>
 
-      <div className="border-border flex items-center justify-between border-t pt-3">
-        <div className="flex gap-2">
+      <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant={invoice.status === "paid" ? "secondary" : "primary"}
             className="h-auto px-3 py-1.5 text-xs"

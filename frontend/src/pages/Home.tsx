@@ -48,14 +48,17 @@ export default function Home() {
 
   return (
     <div className="animate-in fade-in space-y-8 duration-500">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-text-muted text-sm">
             Hi {user.value?.username}, here&apos;s your business at a glance.
           </p>
         </div>
-        <a href="/invoices" className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
+        <a
+          href="/invoices"
+          className="btn-primary flex items-center justify-center gap-2 px-4 py-2 text-sm"
+        >
           <span>Manage Invoices</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -135,27 +138,22 @@ export default function Home() {
             ) : (
               <div className="divide-border divide-y">
                 {stats.topDebtors.map((debtor) => (
-                  <div key={debtor.id} className="flex items-center justify-between p-4">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold">{debtor.username}</span>
-                      <span className="text-text-muted text-[10px]">{debtor.email}</span>
+                  <div key={debtor.id} className="flex items-center justify-between gap-4 p-4">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-bold" title={debtor.username}>
+                        {debtor.username}
+                      </span>
+                      <span className="text-text-muted truncate text-[10px]" title={debtor.email}>
+                        {debtor.email}
+                      </span>
                     </div>
-                    <span className="text-sm font-bold text-red-600">
+                    <span className="shrink-0 text-sm font-bold text-red-600">
                       {formatAmount(debtor.total_unpaid)}
                     </span>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Quick Tip Card */}
-          <div className="rounded-custom border-primary/10 bg-primary/5 mt-6 border p-4">
-            <h3 className="text-primary mb-1 text-xs font-bold uppercase">Productivity Tip</h3>
-            <p className="text-text-main text-xs leading-relaxed">
-              Invoices marked as <span className="font-bold">Overdue</span> are automatically
-              eligible for automated reminders. Check your settings to customize templates.
-            </p>
           </div>
         </div>
       </div>

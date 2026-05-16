@@ -33,6 +33,8 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
     const offset = (page - 1) * limit;
     const status = req.query.status as string;
     const search = req.query.search as string;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
 
     let query = `
       SELECT i.*, c.username as customer_name, c.email as customer_email
@@ -63,6 +65,20 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
       const searchParam = `%${search}%`;
       queryParams.push(searchParam, searchParam);
       countParams.push(searchParam, searchParam);
+    }
+
+    if (startDate) {
+      query += ` AND i.due_date >= ?`;
+      countQuery += ` AND i.due_date >= ?`;
+      queryParams.push(startDate);
+      countParams.push(startDate);
+    }
+
+    if (endDate) {
+      query += ` AND i.due_date <= ?`;
+      countQuery += ` AND i.due_date <= ?`;
+      queryParams.push(endDate);
+      countParams.push(endDate);
     }
 
     query += ` ORDER BY i.created_on DESC LIMIT ? OFFSET ?`;

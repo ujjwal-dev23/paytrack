@@ -62,13 +62,13 @@ export const pagination = signal<PaginationMetadata>({
   totalPages: 1,
 });
 export const stats = signal<InvoiceStats>({ total: 0, unpaid: 0 });
-export const filters = signal({ status: "all", search: "" });
+export const filters = signal({ status: "all", search: "", startDate: "", endDate: "" });
 
 // Actions
 export const fetchInvoices = async () => {
   try {
     isInvoiceLoading.value = true;
-    const { status, search } = filters.value;
+    const { status, search, startDate, endDate } = filters.value;
     const { page, limit } = pagination.value;
 
     const queryParams = new URLSearchParams();
@@ -76,6 +76,8 @@ export const fetchInvoices = async () => {
     queryParams.append("limit", limit.toString());
     if (status && status !== "all") queryParams.append("status", status);
     if (search) queryParams.append("search", search);
+    if (startDate) queryParams.append("startDate", startDate);
+    if (endDate) queryParams.append("endDate", endDate);
 
     const response = await apiFetch<
       ApiResponse<{ invoices: Invoice[] }> & { pagination: PaginationMetadata; stats: InvoiceStats }
