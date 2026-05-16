@@ -71,15 +71,15 @@ export function Autocomplete({
   };
 
   return (
-    <div className="space-y-1.5" ref={containerRef}>
-      <label className="text-text-muted text-xs font-semibold tracking-wider uppercase">
+    <div className="w-full" ref={containerRef}>
+      <label className="label">
         {label}
-        {required && <span className="text-primary ml-1">*</span>}
+        {required && <span className="text-primary ml-0.5">*</span>}
       </label>
       <div className="relative">
         <input
           type="text"
-          className="input pr-10"
+          className="input-field pr-10"
           placeholder={placeholder}
           value={query}
           onInput={(e) => {
@@ -92,7 +92,7 @@ export function Autocomplete({
         <input type="hidden" name={name} value={value} />
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
           <svg
-            className="text-text-muted h-4 w-4"
+            className="text-text-muted h-4 w-4 opacity-50"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -108,44 +108,48 @@ export function Autocomplete({
                 <button
                   key={option.id}
                   type="button"
-                  className={`hover:bg-primary/10 flex w-full flex-col items-start rounded-sm px-3 py-2 text-left text-sm transition-colors ${
-                    value === option.id ? "bg-primary/20" : ""
+                  className={`hover:bg-primary/5 flex w-full flex-col items-start rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                    value === option.id ? "bg-primary/10 text-primary" : "text-text-main"
                   }`}
                   onClick={() => handleSelect(option)}
                 >
                   <span className="font-medium">{option.label}</span>
                   {option.sublabel && (
-                    <span className="text-text-muted text-[10px]">{option.sublabel}</span>
+                    <span className="text-text-muted text-[10px] opacity-80">{option.sublabel}</span>
                   )}
                 </button>
               ))
             ) : onAddOne && query ? (
               <button
                 type="button"
-                className="text-primary hover:bg-primary/10 flex w-full items-center gap-2 px-3 py-3 text-left text-sm font-bold transition-colors"
+                className="text-primary hover:bg-primary/10 flex w-full items-center gap-2 rounded-md px-3 py-3 text-left text-sm font-semibold transition-colors"
                 onClick={() => {
                   onAddOne(query);
                   setIsOpen(false);
                 }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add &quot;{query}&quot; as new customer
+                <div className="bg-primary/10 flex h-6 w-6 items-center justify-center rounded-full">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </div>
+                <span>Add &quot;{query}&quot; as new customer</span>
               </button>
             ) : (
-              <div className="text-text-muted px-3 py-4 text-center text-sm">No results found</div>
+              <div className="text-text-muted px-3 py-4 text-center text-sm italic">
+                No results found
+              </div>
             )}
           </div>
         )}

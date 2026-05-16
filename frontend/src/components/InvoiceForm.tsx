@@ -98,6 +98,7 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
         required
         placeholder="100.00"
         disabled={isCreatingCustomer}
+        className={isCreatingCustomer ? "opacity-60 transition-opacity" : "transition-opacity"}
       />
 
       {!isCreatingCustomer ? (
@@ -144,18 +145,33 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
           <p className="text-text-muted text-[10px]">
             This customer will be saved and automatically selected.
           </p>
+          <div className="pt-2">
+            <Button type="submit" className="w-full" isLoading={loading}>
+              Create Customer & Continue
+            </Button>
+          </div>
         </div>
       )}
 
-      <Input label="Due Date" type="date" name="due_date" required disabled={isCreatingCustomer} />
+      <Input
+        label="Due Date"
+        type="date"
+        name="due_date"
+        defaultValue={new Date().toISOString().split("T")[0]}
+        required
+        disabled={isCreatingCustomer}
+        className={isCreatingCustomer ? "opacity-60 transition-opacity" : "transition-opacity"}
+      />
 
       {error && <p className="text-center text-xs text-red-500">{error}</p>}
 
-      <div className="pt-2">
-        <Button type="submit" className="w-full" isLoading={loading}>
-          {isCreatingCustomer ? "Create Customer & Continue" : "Create Invoice"}
-        </Button>
-      </div>
+      {!isCreatingCustomer && (
+        <div className="pt-2">
+          <Button type="submit" className="w-full" isLoading={loading}>
+            Create Invoice
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

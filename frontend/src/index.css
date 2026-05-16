@@ -26,7 +26,7 @@
   }
 
   .input-field {
-    @apply border-border rounded-custom focus:ring-primary/20 focus:border-primary w-full border px-3 py-2 transition-all focus:ring-2 focus:outline-none;
+    @apply border-border rounded-custom focus:ring-primary/20 focus:border-primary w-full border px-3 py-2 transition-all focus:ring-2 focus:outline-none disabled:bg-slate-50 disabled:text-text-muted disabled:cursor-not-allowed disabled:opacity-70;
   }
 
   .card {
