@@ -81,7 +81,18 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
       countParams.push(endDate);
     }
 
-    query += ` ORDER BY i.created_on DESC LIMIT ? OFFSET ?`;
+    query += `
+      ORDER BY 
+        CASE 
+          WHEN i.status = 'overdue' THEN 0 
+          WHEN i.status = 'pending' THEN 1 
+          WHEN i.status = 'paid' THEN 2 
+          ELSE 3 
+        END ASC,
+        i.amount DESC,
+        i.due_date ASC
+      LIMIT ? OFFSET ?
+    `;
     queryParams.push(limit, offset);
 
     const invoices = db.prepare(query).all(...queryParams) as (Invoice & {
@@ -173,7 +184,12 @@ router.get("/stats/dashboard", (req: AuthRequest, res: Response, next: NextFunct
       LEFT JOIN customers c ON i.customer_id = c.id
       WHERE i.user_id = ? AND i.status != 'paid'
       ORDER BY 
-        CASE WHEN i.status = 'overdue' THEN 0 ELSE 1 END,
+        CASE 
+          WHEN i.status = 'overdue' THEN 0 
+          WHEN i.status = 'pending' THEN 1 
+          ELSE 2 
+        END ASC,
+        i.amount DESC,
         i.due_date ASC
       LIMIT 5
     `,
