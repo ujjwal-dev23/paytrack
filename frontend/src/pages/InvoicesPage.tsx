@@ -24,7 +24,7 @@ export default function InvoicesPage() {
   const hasActiveAdvancedFilters = !!(filters.value.startDate || filters.value.endDate);
 
   return (
-    <div className="animate-in fade-in space-y-8 duration-500">
+    <div className="animate-in fade-in max-w-full overflow-hidden space-y-8 duration-500">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Invoices</h1>

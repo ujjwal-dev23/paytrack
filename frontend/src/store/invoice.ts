@@ -121,7 +121,9 @@ export const createInvoice = async (data: Partial<Invoice>) => {
       data,
     });
     if (response.status === "success") {
-      invoices.value = [response.data.invoice, ...invoices.value];
+      // Refresh both to ensure UI consistency across pages
+      if (dashboardStats.value) fetchDashboardStats();
+      if (invoices.value.length > 0) fetchInvoices();
       return response.data.invoice;
     }
   } finally {
@@ -130,27 +132,46 @@ export const createInvoice = async (data: Partial<Invoice>) => {
 };
 
 export const updateInvoiceStatus = async (id: number, status: InvoiceStatus) => {
-  const response = await apiFetch<ApiResponse<{ invoice: Invoice }>>(`/invoices/${id}`, {
-    method: "PATCH",
-    data: { status },
-  });
-  if (response.status === "success") {
-    invoices.value = invoices.value.map((inv) => (inv.id === id ? response.data.invoice : inv));
+  try {
+    const response = await apiFetch<ApiResponse<{ invoice: Invoice }>>(`/invoices/${id}`, {
+      method: "PATCH",
+      data: { status },
+    });
+    if (response.status === "success") {
+      // Refresh both to ensure UI consistency across pages
+      if (dashboardStats.value) fetchDashboardStats();
+      if (invoices.value.length > 0) fetchInvoices();
+    }
+  } catch (err) {
+    console.error("Failed to update status", err);
   }
 };
 
 export const updateInvoice = async (id: number, data: Partial<Invoice>) => {
-  const response = await apiFetch<ApiResponse<{ invoice: Invoice }>>(`/invoices/${id}`, {
-    method: "PATCH",
-    data,
-  });
-  if (response.status === "success") {
-    invoices.value = invoices.value.map((inv) => (inv.id === id ? response.data.invoice : inv));
-    return response.data.invoice;
+  try {
+    const response = await apiFetch<ApiResponse<{ invoice: Invoice }>>(`/invoices/${id}`, {
+      method: "PATCH",
+      data,
+    });
+    if (response.status === "success") {
+      // Refresh both to ensure UI consistency across pages
+      if (dashboardStats.value) fetchDashboardStats();
+      if (invoices.value.length > 0) fetchInvoices();
+      return response.data.invoice;
+    }
+  } catch (err) {
+    console.error("Failed to update invoice", err);
+    throw err;
   }
 };
 
 export const deleteInvoice = async (id: number) => {
-  await apiFetch(`/invoices/${id}`, { method: "DELETE" });
-  invoices.value = invoices.value.filter((inv) => inv.id !== id);
+  try {
+    await apiFetch(`/invoices/${id}`, { method: "DELETE" });
+    // Refresh both to ensure UI consistency across pages
+    if (dashboardStats.value) fetchDashboardStats();
+    if (invoices.value.length > 0) fetchInvoices();
+  } catch (err) {
+    console.error("Failed to delete invoice", err);
+  }
 };

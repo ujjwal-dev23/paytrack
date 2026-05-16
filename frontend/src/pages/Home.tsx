@@ -79,24 +79,33 @@ export default function Home() {
 
       {/* Financial Health Row */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="card py-6 text-center">
-          <span className="text-3xl font-extrabold text-green-600">
+        <div className="card overflow-hidden px-4 py-6 text-center">
+          <span
+            className="block truncate text-3xl font-extrabold text-green-600"
+            title={formatAmount(stats?.totals.paid || 0)}
+          >
             {formatAmount(stats?.totals.paid || 0)}
           </span>
           <p className="text-text-muted mt-2 text-xs font-bold tracking-widest uppercase">
             Total Revenue
           </p>
         </div>
-        <div className="card py-6 text-center">
-          <span className="text-3xl font-extrabold text-yellow-600">
+        <div className="card overflow-hidden px-4 py-6 text-center">
+          <span
+            className="block truncate text-3xl font-extrabold text-yellow-600"
+            title={formatAmount(stats?.totals.pending || 0)}
+          >
             {formatAmount(stats?.totals.pending || 0)}
           </span>
           <p className="text-text-muted mt-2 text-xs font-bold tracking-widest uppercase">
             Pending
           </p>
         </div>
-        <div className="card border-red-100 bg-red-50/30 py-6 text-center">
-          <span className="text-3xl font-extrabold text-red-600">
+        <div className="card overflow-hidden border-red-100 bg-red-50/30 px-4 py-6 text-center">
+          <span
+            className="block truncate text-3xl font-extrabold text-red-600"
+            title={formatAmount(stats?.totals.overdue || 0)}
+          >
             {formatAmount(stats?.totals.overdue || 0)}
           </span>
           <p className="text-text-muted mt-2 text-xs font-bold tracking-widest uppercase">
@@ -138,8 +147,8 @@ export default function Home() {
             ) : (
               <div className="divide-border divide-y">
                 {stats.topDebtors.map((debtor) => (
-                  <div key={debtor.id} className="flex items-center justify-between gap-4 p-4">
-                    <div className="flex min-w-0 flex-col">
+                  <div key={debtor.id} className="flex min-w-0 items-center justify-between gap-4 p-4">
+                    <div className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-sm font-bold" title={debtor.username}>
                         {debtor.username}
                       </span>
@@ -147,7 +156,10 @@ export default function Home() {
                         {debtor.email}
                       </span>
                     </div>
-                    <span className="shrink-0 text-sm font-bold text-red-600">
+                    <span
+                      className="min-w-0 shrink-1 truncate text-sm font-bold text-red-600"
+                      title={formatAmount(debtor.total_unpaid)}
+                    >
                       {formatAmount(debtor.total_unpaid)}
                     </span>
                   </div>
