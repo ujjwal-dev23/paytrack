@@ -58,7 +58,7 @@ export const invoiceError = signal<string | null>(null);
 export const pagination = signal<PaginationMetadata>({
   total: 0,
   page: 1,
-  limit: 10,
+  limit: 5,
   totalPages: 1,
 });
 export const stats = signal<InvoiceStats>({ total: 0, unpaid: 0 });
@@ -68,6 +68,7 @@ export const filters = signal({ status: "all", search: "", startDate: "", endDat
 export const fetchInvoices = async () => {
   try {
     isInvoiceLoading.value = true;
+    invoiceError.value = null;
     const { status, search, startDate, endDate } = filters.value;
     const { page, limit } = pagination.value;
 

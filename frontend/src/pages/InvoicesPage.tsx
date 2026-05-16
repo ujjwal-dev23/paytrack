@@ -1,4 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
+import { batch } from "@preact/signals";
 import { fetchInvoices, invoices, isInvoiceLoading, filters, pagination } from "../store/invoice";
 import { fetchReminders } from "../store/reminder";
 import { isAuthenticated } from "../store/auth";
@@ -15,7 +16,7 @@ export default function InvoicesPage() {
       fetchInvoices();
       fetchReminders();
     }
-  }, [isAuthenticated.value, filters.value, pagination.value.page]);
+  }, [isAuthenticated.value, filters.value, pagination.value]);
 
   if (!isAuthenticated.value) {
     return null; // Layout.tsx handles auth redirect/messaging if needed, or we just show nothing
@@ -47,11 +48,13 @@ export default function InvoicesPage() {
                   className="input-field py-1.5 pl-8 text-xs"
                   value={filters.value.search}
                   onInput={(e) => {
-                    filters.value = {
-                      ...filters.value,
-                      search: (e.target as HTMLInputElement).value,
-                    };
-                    pagination.value = { ...pagination.value, page: 1 };
+                    batch(() => {
+                      filters.value = {
+                        ...filters.value,
+                        search: (e.target as HTMLInputElement).value,
+                      };
+                      pagination.value = { ...pagination.value, page: 1 };
+                    });
                   }}
                 />
                 <svg
@@ -93,11 +96,13 @@ export default function InvoicesPage() {
                 value={filters.value.status}
                 onChange={(e) => {
                   const target = e.target as HTMLSelectElement;
-                  filters.value = {
-                    ...filters.value,
-                    status: target.value,
-                  };
-                  pagination.value = { ...pagination.value, page: 1 };
+                  batch(() => {
+                    filters.value = {
+                      ...filters.value,
+                      status: target.value,
+                    };
+                    pagination.value = { ...pagination.value, page: 1 };
+                  });
                   target.blur();
                 }}
               >
@@ -138,11 +143,13 @@ export default function InvoicesPage() {
                     value={filters.value.startDate}
                     onChange={(e) => {
                       const target = e.target as HTMLInputElement;
-                      filters.value = {
-                        ...filters.value,
-                        startDate: target.value,
-                      };
-                      pagination.value = { ...pagination.value, page: 1 };
+                      batch(() => {
+                        filters.value = {
+                          ...filters.value,
+                          startDate: target.value,
+                        };
+                        pagination.value = { ...pagination.value, page: 1 };
+                      });
                       target.blur();
                     }}
                   />
@@ -172,11 +179,13 @@ export default function InvoicesPage() {
                     value={filters.value.endDate}
                     onChange={(e) => {
                       const target = e.target as HTMLInputElement;
-                      filters.value = {
-                        ...filters.value,
-                        endDate: target.value,
-                      };
-                      pagination.value = { ...pagination.value, page: 1 };
+                      batch(() => {
+                        filters.value = {
+                          ...filters.value,
+                          endDate: target.value,
+                        };
+                        pagination.value = { ...pagination.value, page: 1 };
+                      });
                       target.blur();
                     }}
                   />
@@ -197,8 +206,10 @@ export default function InvoicesPage() {
               </div>
               <button
                 onClick={() => {
-                  filters.value = { ...filters.value, startDate: "", endDate: "" };
-                  pagination.value = { ...pagination.value, page: 1 };
+                  batch(() => {
+                    filters.value = { ...filters.value, startDate: "", endDate: "" };
+                    pagination.value = { ...pagination.value, page: 1 };
+                  });
                 }}
                 className="hover:text-primary-dark text-primary flex h-9 items-center px-4 text-xs font-bold transition-colors"
               >
