@@ -6,7 +6,7 @@ interface RequestOptions extends RequestInit {
 
 export const apiFetch = async <TResponse = unknown>(
   endpoint: string,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
 ): Promise<TResponse> => {
   const { data, ...customConfig } = options;
   const headers = { "Content-Type": "application/json" };

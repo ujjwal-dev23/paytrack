@@ -1,12 +1,13 @@
 import { useLocation } from "preact-iso";
 import { useState } from "preact/hooks";
-import { isAuthLoading, isAuthenticated, signup } from "../store/auth";
+import { isAuthenticated, signup } from "../store/auth";
+import { Input } from "../components/Input";
+import { Button } from "../components/Button";
 
 export default function SignupPage() {
   const { route } = useLocation();
   const [error, setError] = useState<string | null>(null);
-
-  if (isAuthLoading.value) return <div>Loading ...</div>;
+  const [loading, setLoading] = useState(false);
 
   if (isAuthenticated.value) {
     route("/");
@@ -16,6 +17,8 @@ export default function SignupPage() {
   const signupHandler = async (e: Event) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
+
     const formData = new FormData(e.target as HTMLFormElement);
     const username = formData.get("username") as string;
     const email = formData.get("email") as string;
@@ -26,32 +29,62 @@ export default function SignupPage() {
       route("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
-      <h1>Signup</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={signupHandler}>
-        <div>
-          <label>Username: </label>
-          <input type="text" name="username" required />
-        </div>
-        <div>
-          <label>Email: </label>
-          <input type="email" name="email" required />
-        </div>
-        <div>
-          <label>Password: </label>
-          <input type="password" name="password" required />
-        </div>
-        <button type="submit" disabled={isAuthLoading.value}>
-          {isAuthLoading.value ? "Signing Up..." : "Sign Up"}
-        </button>
-      </form>
-      <p>
-        Already have an account? <a href="/login">Log in</a>
+    <div className="mx-auto mt-8 max-w-sm sm:mt-16">
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
+        <p className="text-text-muted mt-2">Start tracking your payments today</p>
+      </div>
+
+      <div className="card">
+        <form onSubmit={signupHandler} className="space-y-4">
+          <Input
+            label="Username"
+            type="text"
+            name="username"
+            placeholder="johndoe"
+            required
+            autoComplete="username"
+          />
+          <Input
+            label="Email address"
+            type="email"
+            name="email"
+            placeholder="name@example.com"
+            required
+            autoComplete="email"
+          />
+          <Input
+            label="Password"
+            type="password"
+            name="password"
+            placeholder="••••••••"
+            required
+            autoComplete="new-password"
+          />
+
+          {error && (
+            <div className="rounded-custom border border-red-100 bg-red-50 p-3">
+              <p className="text-center text-xs text-red-600">{error}</p>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" isLoading={loading}>
+            Create Account
+          </Button>
+        </form>
+      </div>
+
+      <p className="text-text-muted mt-6 text-center text-sm">
+        Already have an account?{" "}
+        <a href="/login" className="text-primary font-medium hover:underline">
+          Log in
+        </a>
       </p>
     </div>
   );
