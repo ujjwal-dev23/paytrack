@@ -4,4 +4,5 @@ export interface User {
   email: string;
   password?: string;
   reminder_template?: string | null;
+  created_at?: string;
 }

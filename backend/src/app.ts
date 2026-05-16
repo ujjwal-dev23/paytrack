@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import health from "./routes/health";
 import auth from "./routes/auth";
+import customers from "./routes/customers";
 import invoices from "./routes/invoices";
 import reminders from "./routes/reminders";
 import { errorHandler } from "./middleware/errorHandler";
@@ -29,6 +30,7 @@ app.get("/", (_, res) => {
 
 app.use("/health", health);
 app.use("/api/auth", auth);
+app.use("/api/customers", customers);
 app.use("/api/invoices", invoices);
 app.use("/api/reminders", reminders);
 

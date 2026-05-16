@@ -71,11 +71,16 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
     return next(new ApiError(400, "Please provide amount, customer_id, and due_date"));
   }
 
-  if (customer_id === req.user?.id) {
-    return next(new ApiError(400, "User cannot be equal to Customer"));
-  }
-
   try {
+    // Verify customer ownership
+    const customer = db
+      .prepare("SELECT id FROM customers WHERE id = ? AND user_id = ?")
+      .get(customer_id, req.user!.id);
+
+    if (!customer) {
+      return next(new ApiError(400, "Invalid customer_id or customer does not belong to you"));
+    }
+
     const stmt = db.prepare(
       "INSERT INTO invoices (amount, user_id, customer_id, due_date, status) VALUES (?, ?, ?, ?, ?)",
     );
@@ -121,6 +126,17 @@ router.patch("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
 
     if (invoice.user_id !== req.user!.id) {
       return next(new ApiError(403, "You do not have permission to update this invoice"));
+    }
+
+    // Verify new customer ownership if customer_id is being changed
+    if (customer_id && customer_id !== invoice.customer_id) {
+      const customer = db
+        .prepare("SELECT id FROM customers WHERE id = ? AND user_id = ?")
+        .get(customer_id, req.user!.id);
+
+      if (!customer) {
+        return next(new ApiError(400, "Invalid customer_id or customer does not belong to you"));
+      }
     }
 
     // 2. Perform update
