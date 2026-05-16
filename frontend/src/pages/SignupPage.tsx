@@ -1,10 +1,11 @@
 import { useLocation } from "preact-iso";
+import { useState } from "preact/hooks";
 import { isAuthLoading, isAuthenticated, signup } from "../store/auth";
 
 export default function SignupPage() {
   const { route } = useLocation();
+  const [error, setError] = useState<string | null>(null);
 
-  // TODO: Implement loading State
   if (isAuthLoading.value) return <div>Loading ...</div>;
 
   if (isAuthenticated.value) {
@@ -12,15 +13,26 @@ export default function SignupPage() {
     return null;
   }
 
-  const signupHandler = (e: Event) => {
+  const signupHandler = async (e: Event) => {
     e.preventDefault();
-    // Fetch data from form and perform API call
-    signup();
+    setError(null);
+    const formData = new FormData(e.target as HTMLFormElement);
+    const username = formData.get("username") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      await signup({ username, email, password });
+      route("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Signup failed");
+    }
   };
 
   return (
     <div>
       <h1>Signup</h1>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <form onSubmit={signupHandler}>
         <div>
           <label>Username: </label>
@@ -34,7 +46,9 @@ export default function SignupPage() {
           <label>Password: </label>
           <input type="password" name="password" required />
         </div>
-        <button type="submit">Sign Up</button>
+        <button type="submit" disabled={isAuthLoading.value}>
+          {isAuthLoading.value ? "Signing Up..." : "Sign Up"}
+        </button>
       </form>
       <p>
         Already have an account? <a href="/login">Log in</a>

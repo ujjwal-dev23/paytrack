@@ -4,10 +4,39 @@ import jwt from "jsonwebtoken";
 import { db } from "../db";
 import { ApiError } from "../utils/ApiError";
 import type { User } from "../models";
+import { protect } from "../middleware/auth";
+import type { AuthRequest } from "../middleware/auth";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-change-me-in-production";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+
+/**
+ * Helper to sign token and send cookie
+ */
+const sendToken = (user: Omit<User, "password">, statusCode: number, res: express.Response) => {
+  const token = jwt.sign({ id: user.id, username: user.username, email: user.email }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+  });
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+    ),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict" as const,
+  };
+
+  res.cookie("token", token, cookieOptions);
+
+  res.status(statusCode).json({
+    status: "success",
+    data: {
+      user,
+    },
+  });
+};
 
 /**
  * Register a new user
@@ -21,28 +50,21 @@ router.post("/signup", async (req, res, next) => {
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, process.env.BCRYPT_SALT || 10);
 
     const stmt = db.prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
 
     const info = stmt.run(username, email, hashedPassword);
     const userId = Number(info.lastInsertRowid);
 
-    const token = jwt.sign({ id: userId, username, email }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
-    });
+    const user: Omit<User, "password"> = {
+      id: userId,
+      username,
+      email,
+      reminder_template: null,
+    };
 
-    res.status(201).json({
-      status: "success",
-      token,
-      data: {
-        user: {
-          id: userId,
-          username,
-          email,
-        },
-      },
-    });
+    sendToken(user, 201, res);
   } catch (error) {
     if (
       error &&
@@ -74,26 +96,42 @@ router.post("/login", async (req, res, next) => {
       return next(new ApiError(401, "Invalid email or password"));
     }
 
-    const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"] },
-    );
+    const userResponse: Omit<User, "password"> = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      reminder_template: user.reminder_template,
+    };
 
-    res.status(200).json({
-      status: "success",
-      token,
-      data: {
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        },
-      },
-    });
+    sendToken(userResponse, 200, res);
   } catch (error) {
     next(error);
   }
+});
+
+/**
+ * Log out a user
+ * POST /api/auth/logout
+ */
+router.post("/logout", (_req, res) => {
+  res.cookie("token", "loggedout", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: "success" });
+});
+
+/**
+ * Get current user info
+ * GET /api/auth/me
+ */
+router.get("/me", protect, (req: AuthRequest, res) => {
+  res.status(200).json({
+    status: "success",
+    data: {
+      user: req.user,
+    },
+  });
 });
 
 export default router;

@@ -1,8 +1,17 @@
 import { computed, signal } from "@preact/signals";
+import { apiFetch } from "../services/api";
 
-interface User {
-  id: string;
+export interface User {
+  id: number;
+  username: string;
   email: string;
+  reminder_template?: string | null;
+}
+
+interface ApiResponse<T> {
+  status: string;
+  data: T;
+  message?: string;
 }
 
 // Auth Store Global State
@@ -10,16 +19,17 @@ export const user = signal<User | null>(null);
 export const isAuthLoading = signal(true);
 export const isAuthenticated = computed(() => user.value !== null);
 
+/**
+ * Initialize authentication state by checking the session
+ */
 export const initAuth = async () => {
   try {
     isAuthLoading.value = true;
-    // TODO: Check Session through API Call
-
-    // Mocked session check in localstorage (to be removed later)
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      user.value = { id: "1", email: "user@example.com" };
-      isAuthLoading.value = false;
+    const response = await apiFetch<ApiResponse<{ user: User }>>("/auth/me");
+    if (response.status === "success" && response.data.user) {
+      user.value = response.data.user;
+    } else {
+      user.value = null;
     }
   } catch (_error) {
     user.value = null;
@@ -28,20 +38,57 @@ export const initAuth = async () => {
   }
 };
 
-export const login = (userData: User, token: string) => {
-  localStorage.setItem("auth_token", token);
-  user.value = userData;
-  // TODO: Fetch Token through backend api
+/**
+ * Login user
+ */
+export const login = async (credentials: Record<string, string>) => {
+  try {
+    isAuthLoading.value = true;
+    const response = await apiFetch<ApiResponse<{ user: User }>>("/auth/login", {
+      method: "POST",
+      data: credentials,
+    });
+    if (response.status === "success" && response.data.user) {
+      user.value = response.data.user;
+    }
+  } catch (error) {
+    user.value = null;
+    throw error;
+  } finally {
+    isAuthLoading.value = false;
+  }
 };
 
-export const logout = () => {
-  localStorage.removeItem("auth_token");
-  user.value = null;
-  // TODO: call backend logout route
+/**
+ * Signup user
+ */
+export const signup = async (userData: Record<string, string>) => {
+  try {
+    isAuthLoading.value = true;
+    const response = await apiFetch<ApiResponse<{ user: User }>>("/auth/signup", {
+      method: "POST",
+      data: userData,
+    });
+    if (response.status === "success" && response.data.user) {
+      user.value = response.data.user;
+    }
+  } catch (error) {
+    user.value = null;
+    throw error;
+  } finally {
+    isAuthLoading.value = false;
+  }
 };
 
-export const signup = () => {
-  // TODO: call backend signup route
-  // calling login function for testing right now
-  login({ id: "213", email: "bear" }, "fake_token2");
+/**
+ * Logout user
+ */
+export const logout = async () => {
+  try {
+    await apiFetch<ApiResponse<null>>("/auth/logout", { method: "POST" });
+  } catch (error) {
+    console.error("Logout failed", error);
+  } finally {
+    user.value = null;
+  }
 };

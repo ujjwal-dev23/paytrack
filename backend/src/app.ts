@@ -6,16 +6,19 @@ import invoices from "./routes/invoices";
 import reminders from "./routes/reminders";
 import { errorHandler } from "./middleware/errorHandler";
 import { ApiError } from "./utils/ApiError";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "0.0.0.0",
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : ["http://localhost:5173", "http://127.0.0.1:5173"],
+  credentials: true,
   optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser(process.env.COOKIE_SECRET || "munch_munch"));
 
 // Routes
 app.get("/", (_, res) => {

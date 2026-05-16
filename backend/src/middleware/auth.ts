@@ -17,12 +17,8 @@ export interface AuthRequest extends Request {
  * Middleware to protect routes - ensures user is authenticated
  */
 export const protect = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  let token: string | undefined;
-
-  // 1. Get token from headers
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-    token = req.headers.authorization.split(" ")[1];
-  }
+  // Get token from cookies
+  const token = req.cookies?.token;
 
   if (!token) {
     return next(new ApiError(401, "Not authorized to access this route"));
