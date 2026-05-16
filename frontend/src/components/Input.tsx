@@ -1,9 +1,9 @@
 import type { JSX } from "preact";
 
-interface InputProps extends JSX.HTMLAttributes<HTMLInputElement> {
+type InputProps = JSX.IntrinsicElements["input"] & {
   label?: string;
   error?: string | null;
-}
+};
 
 export function Input({ label, error, className = "", ...props }: InputProps) {
   return (

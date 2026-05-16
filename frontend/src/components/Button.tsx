@@ -1,9 +1,9 @@
 import type { JSX } from "preact";
 
-interface ButtonProps extends JSX.HTMLAttributes<HTMLButtonElement> {
+type ButtonProps = JSX.IntrinsicElements["button"] & {
   variant?: "primary" | "secondary" | "danger";
   isLoading?: boolean;
-}
+};
 
 export function Button({
   variant = "primary",
