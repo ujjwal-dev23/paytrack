@@ -20,11 +20,13 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
     const today = new Date().toISOString().split("T")[0];
 
     // Automatically mark past due pending invoices as overdue
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE invoices
       SET status = 'overdue'
       WHERE user_id = ? AND status = 'pending' AND due_date < ?
-    `).run(req.user!.id, today);
+    `,
+    ).run(req.user!.id, today);
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -66,17 +68,26 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
     query += ` ORDER BY i.created_on DESC LIMIT ? OFFSET ?`;
     queryParams.push(limit, offset);
 
-    const invoices = db.prepare(query).all(...queryParams) as (Invoice & { customer_name: string; customer_email: string })[];
-    const { total: filteredTotal } = db.prepare(countQuery).get(...countParams) as { total: number };
+    const invoices = db.prepare(query).all(...queryParams) as (Invoice & {
+      customer_name: string;
+      customer_email: string;
+    })[];
+    const { total: filteredTotal } = db.prepare(countQuery).get(...countParams) as {
+      total: number;
+    };
 
     // Global stats (ignoring filters)
-    const globalStats = db.prepare(`
+    const globalStats = db
+      .prepare(
+        `
       SELECT 
         COUNT(*) as total,
         SUM(CASE WHEN status != 'paid' THEN 1 ELSE 0 END) as unpaid
       FROM invoices 
       WHERE user_id = ?
-    `).get(req.user!.id) as { total: number; unpaid: number };
+    `,
+      )
+      .get(req.user!.id) as { total: number; unpaid: number };
 
     res.status(200).json({
       status: "success",
@@ -99,6 +110,79 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
 });
 
 /**
+ * Get dashboard statistics
+ * GET /api/invoices/stats/dashboard
+ */
+router.get("/stats/dashboard", (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+
+    // 1. Financial Totals
+    const totals = db
+      .prepare(
+        `
+      SELECT 
+        SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) as paid,
+        SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'overdue' THEN amount ELSE 0 END) as overdue
+      FROM invoices 
+      WHERE user_id = ?
+    `,
+      )
+      .get(userId) as { paid: number; pending: number; overdue: number };
+
+    // 2. Top Debtors (Unpaid balance)
+    const topDebtors = db
+      .prepare(
+        `
+      SELECT 
+        c.id, c.username, c.email,
+        SUM(i.amount) as total_unpaid
+      FROM invoices i
+      JOIN customers c ON i.customer_id = c.id
+      WHERE i.user_id = ? AND i.status != 'paid'
+      GROUP BY c.id
+      ORDER BY total_unpaid DESC
+      LIMIT 5
+    `,
+      )
+      .all(userId);
+
+    // 3. Needs Attention (Overdue or soon-to-be due)
+    const needsAttention = db
+      .prepare(
+        `
+      SELECT i.*, c.username as customer_name, c.email as customer_email
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      WHERE i.user_id = ? AND i.status != 'paid'
+      ORDER BY 
+        CASE WHEN i.status = 'overdue' THEN 0 ELSE 1 END,
+        i.due_date ASC
+      LIMIT 5
+    `,
+      )
+      .all(userId);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        totals: {
+          paid: totals.paid || 0,
+          pending: totals.pending || 0,
+          overdue: totals.overdue || 0,
+          total: (totals.paid || 0) + (totals.pending || 0) + (totals.overdue || 0),
+        },
+        topDebtors,
+        needsAttention,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * Get a single invoice
  * GET /api/invoices/:id
  */
@@ -106,14 +190,16 @@ router.get("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
   try {
-    const invoice = db.prepare(`
+    const invoice = db
+      .prepare(
+        `
       SELECT i.*, c.username as customer_name, c.email as customer_email
       FROM invoices i
       LEFT JOIN customers c ON i.customer_id = c.id
       WHERE i.id = ?
-    `).get(id) as
-      | (Invoice & { customer_name: string; customer_email: string })
-      | undefined;
+    `,
+      )
+      .get(id) as (Invoice & { customer_name: string; customer_email: string }) | undefined;
 
     if (!invoice) {
       return next(new ApiError(404, "Invoice not found"));
@@ -165,12 +251,16 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
 
     const info = stmt.run(amount, req.user!.id, customer_id, due_date, finalStatus);
 
-    const newInvoice = db.prepare(`
+    const newInvoice = db
+      .prepare(
+        `
       SELECT i.*, c.username as customer_name, c.email as customer_email
       FROM invoices i
       LEFT JOIN customers c ON i.customer_id = c.id
       WHERE i.id = ?
-    `).get(info.lastInsertRowid) as (Invoice & { customer_name: string; customer_email: string });
+    `,
+      )
+      .get(info.lastInsertRowid) as Invoice & { customer_name: string; customer_email: string };
 
     res.status(201).json({
       status: "success",
@@ -229,18 +319,24 @@ router.patch("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
 
     // 3. Auto-update to overdue if needed after update
     const today = new Date().toISOString().split("T")[0];
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE invoices
       SET status = 'overdue'
       WHERE id = ? AND status = 'pending' AND due_date < ?
-    `).run(id, today);
+    `,
+    ).run(id, today);
 
-    const updatedInvoice = db.prepare(`
+    const updatedInvoice = db
+      .prepare(
+        `
       SELECT i.*, c.username as customer_name, c.email as customer_email
       FROM invoices i
       LEFT JOIN customers c ON i.customer_id = c.id
       WHERE i.id = ?
-    `).get(id) as (Invoice & { customer_name: string; customer_email: string });
+    `,
+      )
+      .get(id) as Invoice & { customer_name: string; customer_email: string };
 
     res.status(200).json({
       status: "success",

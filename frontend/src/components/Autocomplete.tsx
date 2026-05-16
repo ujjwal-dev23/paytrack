@@ -32,7 +32,7 @@ export function Autocomplete({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((opt) => opt.id === value);
-  
+
   useEffect(() => {
     if (selectedOption) {
       setQuery(selectedOption.label);
@@ -97,23 +97,18 @@ export function Autocomplete({
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
 
         {isOpen && (filteredOptions.length > 0 || query) && (
-          <div className="bg-card border-border rounded-custom absolute z-50 mt-1 max-h-60 w-full overflow-auto border p-1 shadow-xl outline-none animate-in fade-in zoom-in-95 duration-100">
+          <div className="bg-card border-border rounded-custom animate-in fade-in zoom-in-95 absolute z-50 mt-1 max-h-60 w-full overflow-auto border p-1 shadow-xl duration-100 outline-none">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"
-                  className={`flex w-full flex-col items-start px-3 py-2 text-left text-sm transition-colors hover:bg-primary/10 rounded-sm ${
+                  className={`hover:bg-primary/10 flex w-full flex-col items-start rounded-sm px-3 py-2 text-left text-sm transition-colors ${
                     value === option.id ? "bg-primary/20" : ""
                   }`}
                   onClick={() => handleSelect(option)}
@@ -127,7 +122,7 @@ export function Autocomplete({
             ) : onAddOne && query ? (
               <button
                 type="button"
-                className="text-primary flex w-full items-center gap-2 px-3 py-3 text-left text-sm font-bold transition-colors hover:bg-primary/10"
+                className="text-primary hover:bg-primary/10 flex w-full items-center gap-2 px-3 py-3 text-left text-sm font-bold transition-colors"
                 onClick={() => {
                   onAddOne(query);
                   setIsOpen(false);
@@ -150,9 +145,7 @@ export function Autocomplete({
                 Add &quot;{query}&quot; as new customer
               </button>
             ) : (
-              <div className="text-text-muted px-3 py-4 text-center text-sm">
-                No results found
-              </div>
+              <div className="text-text-muted px-3 py-4 text-center text-sm">No results found</div>
             )}
           </div>
         )}

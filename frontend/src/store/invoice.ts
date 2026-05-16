@@ -33,11 +33,34 @@ export interface InvoiceStats {
   unpaid: number;
 }
 
+export interface DashboardStats {
+  totals: {
+    paid: number;
+    pending: number;
+    overdue: number;
+    total: number;
+  };
+  topDebtors: {
+    id: number;
+    username: string;
+    email: string;
+    total_unpaid: number;
+  }[];
+  needsAttention: Invoice[];
+}
+
 // Signals
 export const invoices = signal<Invoice[]>([]);
 export const isInvoiceLoading = signal(false);
+export const dashboardStats = signal<DashboardStats | null>(null);
+export const isDashboardLoading = signal(false);
 export const invoiceError = signal<string | null>(null);
-export const pagination = signal<PaginationMetadata>({ total: 0, page: 1, limit: 10, totalPages: 1 });
+export const pagination = signal<PaginationMetadata>({
+  total: 0,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
+});
 export const stats = signal<InvoiceStats>({ total: 0, unpaid: 0 });
 export const filters = signal({ status: "all", search: "" });
 
@@ -71,6 +94,20 @@ export const fetchInvoices = async () => {
     invoiceError.value = err instanceof Error ? err.message : "Failed to fetch invoices";
   } finally {
     isInvoiceLoading.value = false;
+  }
+};
+
+export const fetchDashboardStats = async () => {
+  try {
+    isDashboardLoading.value = true;
+    const response = await apiFetch<ApiResponse<DashboardStats>>("/invoices/stats/dashboard");
+    if (response.status === "success") {
+      dashboardStats.value = response.data;
+    }
+  } catch (err) {
+    console.error("Failed to fetch dashboard stats", err);
+  } finally {
+    isDashboardLoading.value = false;
   }
 };
 

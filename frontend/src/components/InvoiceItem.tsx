@@ -3,6 +3,7 @@ import { updateInvoiceStatus, deleteInvoice, updateInvoice } from "../store/invo
 import type { Invoice } from "../store/invoice";
 import { sendReminder } from "../store/reminder";
 import { Button } from "./Button";
+import { formatAmount, currency } from "../store/settings";
 
 interface InvoiceItemProps {
   invoice: Invoice;
@@ -69,14 +70,16 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
   };
 
   return (
-    <div className="card group hover:border-primary flex flex-col gap-4 transition-colors p-4">
+    <div className="card group hover:border-primary flex flex-col gap-4 p-4 transition-colors">
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             {isEditingAmount ? (
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <span className="text-text-muted absolute inset-y-0 left-3 flex items-center text-sm">$</span>
+                  <span className="text-text-muted absolute inset-y-0 left-3 flex items-center text-sm">
+                    {currency.value.symbol}
+                  </span>
                   <input
                     type="number"
                     step="0.01"
@@ -105,10 +108,10 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
               </div>
             ) : (
               <div className="flex items-center gap-1">
-                <span className="text-xl font-bold">${invoice.amount.toFixed(2)}</span>
+                <span className="text-xl font-bold">{formatAmount(invoice.amount)}</span>
                 <button
                   onClick={() => setIsEditingAmount(true)}
-                  className="text-text-muted group-hover:text-primary p-1 transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-text-muted group-hover:text-primary p-1 opacity-0 transition-colors group-hover:opacity-100"
                   title="Edit Amount"
                 >
                   <svg

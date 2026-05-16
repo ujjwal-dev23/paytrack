@@ -4,6 +4,7 @@ import { fetchCustomers, customers, createCustomer } from "../store/customer";
 import { Input } from "./Input";
 import { Button } from "./Button";
 import { Autocomplete } from "./Autocomplete";
+import { currency } from "../store/settings";
 
 interface InvoiceFormProps {
   onSuccess: () => void;
@@ -13,7 +14,7 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | number>("");
-  
+
   // New Customer Inline State
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState("");
@@ -49,7 +50,7 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    
+
     if (isCreatingCustomer) {
       await handleCreateCustomer();
       return;
@@ -90,7 +91,7 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
-        label="Amount ($)"
+        label={`Amount (${currency.value.symbol})`}
         type="number"
         name="amount"
         step="0.01"
@@ -98,7 +99,7 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
         placeholder="100.00"
         disabled={isCreatingCustomer}
       />
-      
+
       {!isCreatingCustomer ? (
         <Autocomplete
           label="Customer"
@@ -115,10 +116,10 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
           name="customer_id"
         />
       ) : (
-        <div className="bg-primary/5 rounded-custom border-primary/20 space-y-3 border p-4 animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-primary/5 rounded-custom border-primary/20 animate-in slide-in-from-top-2 space-y-3 border p-4 duration-200">
           <div className="flex items-center justify-between">
             <h3 className="text-primary text-xs font-bold uppercase">New Customer Details</h3>
-            <button 
+            <button
               type="button"
               onClick={() => setIsCreatingCustomer(false)}
               className="text-text-muted hover:text-text-main text-xs"

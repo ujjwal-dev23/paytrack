@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 
 // Pages
 import Home from "./pages/Home";
+const InvoicesPage = lazy(() => import("./pages/InvoicesPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -20,6 +21,7 @@ export function App() {
         <Layout>
           <Router>
             <Route path="/" component={Home} />
+            <Route path="/invoices" component={InvoicesPage} />
             <Route path="/login" component={LoginPage} />
             <Route path="/signup" component={SignupPage} />
             <Route default component={NotFound} />
