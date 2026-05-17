@@ -1,19 +1,6 @@
 import { signal } from "@preact/signals";
 import { apiFetch } from "../services/api";
-
-export interface Customer {
-  id: number;
-  username: string;
-  email: string;
-  user_id: number;
-  created_at?: string;
-}
-
-interface ApiResponse<T> {
-  status: string;
-  data: T;
-  message?: string;
-}
+import type { Customer, ApiResponse } from "@app/backend";
 
 // Signals
 export const customers = signal<Customer[]>([]);

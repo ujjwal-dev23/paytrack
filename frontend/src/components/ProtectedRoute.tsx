@@ -1,7 +1,6 @@
 import { useLocation } from "preact-iso";
 import { useEffect } from "preact/hooks";
 import { isAuthenticated, isAuthLoading } from "../store/auth";
-import type { ComponentType } from "preact";
 
 interface ProtectedRouteProps {
   Page: any;

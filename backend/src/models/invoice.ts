@@ -9,4 +9,6 @@ export interface Invoice {
   due_date: string;
   status: InvoiceStatus;
   created_on: string;
+  customer_name?: string;
+  customer_email?: string;
 }

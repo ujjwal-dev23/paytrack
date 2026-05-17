@@ -1,18 +1,6 @@
 import { computed, signal } from "@preact/signals";
 import { apiFetch } from "../services/api";
-
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  reminder_template?: string | null;
-}
-
-interface ApiResponse<T> {
-  status: string;
-  data: T;
-  message?: string;
-}
+import type { User, ApiResponse } from "@app/backend";
 
 // Auth Store Global State
 export const user = signal<User | null>(null);

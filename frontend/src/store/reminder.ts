@@ -1,20 +1,6 @@
 import { signal } from "@preact/signals";
 import { apiFetch } from "../services/api";
-
-export interface Reminder {
-  id: number;
-  invoice_id: number;
-  sent_on: string;
-  amount?: number;
-  due_date?: string;
-  description?: string | null;
-  customer_name?: string;
-}
-
-interface ApiResponse<T> {
-  status: string;
-  data: T;
-}
+import type { Reminder, ApiResponse } from "@app/backend";
 
 export const reminders = signal<Reminder[]>([]);
 export const isReminderLoading = signal(false);

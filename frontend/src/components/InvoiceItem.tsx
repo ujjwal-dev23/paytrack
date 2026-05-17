@@ -1,9 +1,9 @@
 import { useState } from "preact/hooks";
 import { updateInvoiceStatus, deleteInvoice, updateInvoice } from "../store/invoice";
-import type { Invoice } from "../store/invoice";
 import { sendReminder } from "../store/reminder";
 import { Button } from "./Button";
 import { formatAmount, currency } from "../store/settings";
+import type { Invoice } from "@app/backend";
 
 interface InvoiceItemProps {
   invoice: Invoice;

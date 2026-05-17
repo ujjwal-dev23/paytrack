@@ -16,6 +16,7 @@
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
+    "@app/backend": "workspace:*",
     "@preact/preset-vite": "^2.10.5",
     "@types/node": "^24.12.3",
     "typescript": "~6.0.2",
