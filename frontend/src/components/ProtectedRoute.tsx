@@ -1,10 +1,11 @@
 import { useLocation } from "preact-iso";
 import { useEffect } from "preact/hooks";
+import type { ComponentType } from "preact";
 import { isAuthenticated, isAuthLoading } from "../store/auth";
 
 interface ProtectedRouteProps {
-  Page: any;
-  [key: string]: any;
+  Page: ComponentType<Record<string, unknown>>;
+  [key: string]: unknown;
 }
 
 export function ProtectedRoute({ Page, ...props }: ProtectedRouteProps) {
@@ -18,8 +19,8 @@ export function ProtectedRoute({ Page, ...props }: ProtectedRouteProps) {
 
   if (isAuthLoading.value) {
     return (
-      <div className="flex flex-1 items-center justify-center py-20">
-        <div className="text-text-muted animate-pulse text-sm">Verifying session...</div>
+      <div class="flex flex-1 items-center justify-center py-20">
+        <div class="text-text-muted animate-pulse text-sm">Verifying session...</div>
       </div>
     );
   }
