@@ -29,7 +29,7 @@ router.post("/", async (req: AuthRequest, res: Response, next: NextFunction) => 
       .prepare(
         `
       SELECT
-        i.amount, i.due_date,
+        i.amount, i.due_date, i.status, i.description, i.user_id,
         c.username as customer_name, c.email as customer_email,
         u.username as my_name, u.email as my_email, u.reminder_template
       FROM invoices i
@@ -42,6 +42,9 @@ router.post("/", async (req: AuthRequest, res: Response, next: NextFunction) => 
       | {
           amount: number;
           due_date: string;
+          status: string;
+          description: string | null;
+          user_id: number;
           customer_name: string;
           customer_email: string;
           my_name: string;
@@ -54,17 +57,32 @@ router.post("/", async (req: AuthRequest, res: Response, next: NextFunction) => 
       return next(new ApiError(404, "Invoice data not found"));
     }
 
+    // IMPORTANT: Security check to ensure invoice belongs to the logged-in user
+    if (data.user_id !== req.user!.id) {
+      return next(new ApiError(403, "Not authorized to send reminders for this invoice"));
+    }
+
     // 2. Interpolate template
     const symbol = currency_symbol || "$";
     const formattedAmount = `${symbol}${data.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
     const formattedDate = new Date(data.due_date).toLocaleDateString();
 
     let emailText = data.reminder_template || "";
-    emailText = emailText
-      .replace(/{customer_name}/g, data.customer_name)
-      .replace(/{amount}/g, formattedAmount)
-      .replace(/{due_date}/g, formattedDate)
-      .replace(/{my_name}/g, data.my_name);
+    
+    // Support both curly braces and potentially case-insensitive matching for better UX
+    const replacements = {
+      customer_name: data.customer_name,
+      description: data.description || "No description provided",
+      amount: formattedAmount,
+      status: data.status.toUpperCase(),
+      due_date: formattedDate,
+      my_name: data.my_name,
+    };
+
+    Object.entries(replacements).forEach(([key, value]) => {
+      const regex = new RegExp(`{${key}}`, "gi");
+      emailText = emailText.replace(regex, value);
+    });
 
     // 3. Send email via Resend
     await sendInvoiceReminder({

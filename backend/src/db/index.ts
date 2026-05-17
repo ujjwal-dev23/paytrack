@@ -9,7 +9,13 @@ db.pragma("foreign_keys = ON");
 
 const DEFAULT_REMINDER_TEMPLATE = `Hi {customer_name},
 
-This is a friendly reminder that your invoice for {amount} is due on {due_date}.
+This is a friendly reminder regarding your invoice.
+
+Details:
+- Description: {description}
+- Amount: {amount}
+- Status: {status}
+- Due Date: {due_date}
 
 Please ensure payment is made at your earliest convenience.
 

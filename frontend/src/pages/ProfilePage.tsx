@@ -1,9 +1,11 @@
 import { useState } from "preact/hooks";
+import { useLocation } from "preact-iso";
 import { user, updateProfile, logout } from "../store/auth";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 
 export default function ProfilePage() {
+  const { route } = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -14,7 +16,8 @@ export default function ProfilePage() {
     setError(null);
     setSuccess(false);
 
-    const formData = new FormData(e.target as HTMLFormElement);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
     const data: Record<string, string> = {};
 
     const username = formData.get("username") as string;
@@ -34,6 +37,7 @@ export default function ProfilePage() {
       data.reminder_template = reminder_template;
 
     if (Object.keys(data).length === 0) {
+      setError("No changes detected");
       setLoading(false);
       return;
     }
@@ -48,7 +52,8 @@ export default function ProfilePage() {
         return;
       }
 
-      setSuccess(true);
+      alert("Profile updated successfully!");
+      route("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
@@ -109,7 +114,9 @@ export default function ProfilePage() {
               />
               <p className="mt-2 text-[10px] text-text-muted leading-relaxed">
                 Available placeholders: <code className="bg-primary/5 px-1 rounded text-primary">{`{customer_name}`}</code>,{" "}
+                <code className="bg-primary/5 px-1 rounded text-primary">{`{description}`}</code>,{" "}
                 <code className="bg-primary/5 px-1 rounded text-primary">{`{amount}`}</code>,{" "}
+                <code className="bg-primary/5 px-1 rounded text-primary">{`{status}`}</code>,{" "}
                 <code className="bg-primary/5 px-1 rounded text-primary">{`{due_date}`}</code>,{" "}
                 <code className="bg-primary/5 px-1 rounded text-primary">{`{my_name}`}</code>.
               </p>
