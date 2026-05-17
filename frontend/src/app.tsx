@@ -7,6 +7,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 // Pages
 import Home from "./pages/Home";
 const InvoicesPage = lazy(() => import("./pages/InvoicesPage"));
+const RemindersPage = lazy(() => import("./pages/RemindersPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignupPage = lazy(() => import("./pages/SignupPage"));
@@ -26,6 +27,10 @@ export function App() {
             <Route
               path="/invoices"
               component={(props) => <ProtectedRoute Page={InvoicesPage} {...props} />}
+            />
+            <Route
+              path="/reminders"
+              component={(props) => <ProtectedRoute Page={RemindersPage} {...props} />}
             />
             <Route
               path="/profile"

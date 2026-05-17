@@ -120,19 +120,110 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
     const reminders = db
       .prepare(
         `
-      SELECT r.*
+      SELECT r.*, i.amount, i.due_date, i.description, c.username as customer_name
       FROM reminders r
       JOIN invoices i ON r.invoice_id = i.id
+      JOIN customers c ON i.customer_id = c.id
       WHERE i.user_id = ?
       ORDER BY r.sent_on DESC
     `,
       )
-      .all(req.user!.id) as Reminder[];
+      .all(req.user!.id);
 
     res.status(200).json({
       status: "success",
       results: reminders.length,
       data: { reminders },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * Send bulk reminders for all unpaid invoices
+ * POST /api/reminders/bulk
+ */
+router.post("/bulk", async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { currency_symbol } = req.body;
+
+  try {
+    // Fetch all unpaid invoices
+    const unpaidInvoices = db
+      .prepare(
+        `
+      SELECT
+        i.id as invoice_id, i.amount, i.due_date, i.status, i.description,
+        c.username as customer_name, c.email as customer_email,
+        u.username as my_name, u.email as my_email, u.reminder_template
+      FROM invoices i
+      JOIN customers c ON i.customer_id = c.id
+      JOIN users u ON i.user_id = u.id
+      WHERE i.user_id = ? AND i.status != 'paid'
+    `,
+      )
+      .all(req.user!.id) as any[];
+
+    if (unpaidInvoices.length === 0) {
+      return res.status(200).json({
+        status: "success",
+        message: "No unpaid invoices found.",
+        data: { reminders: [] },
+      });
+    }
+
+    const sentReminders = [];
+    const symbol = currency_symbol || "$";
+
+    for (const data of unpaidInvoices) {
+      const formattedAmount = `${symbol}${data.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+      const formattedDate = new Date(data.due_date).toLocaleDateString();
+
+      let emailText = data.reminder_template || "";
+      
+      const replacements = {
+        customer_name: data.customer_name,
+        description: data.description || "No description provided",
+        amount: formattedAmount,
+        status: data.status.toUpperCase(),
+        due_date: formattedDate,
+        my_name: data.my_name,
+      };
+
+      Object.entries(replacements).forEach(([key, value]) => {
+        const regex = new RegExp(`{${key}}`, "gi");
+        emailText = emailText.replace(regex, value);
+      });
+
+      try {
+        await sendInvoiceReminder({
+          to: data.customer_email,
+          replyTo: data.my_email,
+          subject: `Reminder: Invoice Payment Due (${formattedDate})`,
+          text: emailText,
+        });
+
+        const stmt = db.prepare("INSERT INTO reminders (invoice_id) VALUES (?)");
+        const info = stmt.run(data.invoice_id);
+
+        sentReminders.push({
+          id: Number(info.lastInsertRowid),
+          invoice_id: data.invoice_id,
+          sent_on: new Date().toISOString(),
+          amount: data.amount,
+          due_date: data.due_date,
+          description: data.description,
+          customer_name: data.customer_name,
+        });
+      } catch (err) {
+        console.error(`Failed to send reminder for invoice ${data.invoice_id}`, err);
+        // Continue with other invoices even if one fails
+      }
+    }
+
+    res.status(201).json({
+      status: "success",
+      data: { reminders: sentReminders },
     });
   } catch (error) {
     next(error);

@@ -5,6 +5,10 @@ export interface Reminder {
   id: number;
   invoice_id: number;
   sent_on: string;
+  amount?: number;
+  due_date?: string;
+  description?: string | null;
+  customer_name?: string;
 }
 
 interface ApiResponse<T> {
@@ -35,7 +39,23 @@ export const sendReminder = async (invoiceId: number, currencySymbol: string) =>
     data: { invoice_id: invoiceId, currency_symbol: currencySymbol },
   });
   if (response.status === "success") {
-    reminders.value = [response.data.reminder, ...reminders.value];
+    fetchReminders(); // Refresh to get full contextual data for logs
     return response.data.reminder;
+  }
+};
+
+export const sendBulkReminders = async (currencySymbol: string) => {
+  try {
+    isReminderLoading.value = true;
+    const response = await apiFetch<ApiResponse<{ reminders: Reminder[] }>>("/reminders/bulk", {
+      method: "POST",
+      data: { currency_symbol: currencySymbol },
+    });
+    if (response.status === "success") {
+      fetchReminders(); // Refresh all logs
+      return response.data.reminders;
+    }
+  } finally {
+    isReminderLoading.value = false;
   }
 };
