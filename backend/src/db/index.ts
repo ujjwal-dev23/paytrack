@@ -31,12 +31,7 @@ const initDb = () => {
   `,
   ).run();
 
-  // Migration: Ensure existing users have the default template if null or empty
-  db.prepare(
-    `UPDATE users SET reminder_template = ? WHERE reminder_template IS NULL OR reminder_template = ''`,
-  ).run(DEFAULT_REMINDER_TEMPLATE);
-
-  // Customers table - optimized with index on user_id
+  // Customers table
   db.prepare(
     `
     CREATE TABLE IF NOT EXISTS customers (
@@ -53,7 +48,7 @@ const initDb = () => {
 
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_customers_user_id ON customers(user_id);`).run();
 
-  // Invoices table - customer_id now references customers table
+  // Invoices table
   db.prepare(
     `
     CREATE TABLE IF NOT EXISTS invoices (
@@ -70,13 +65,6 @@ const initDb = () => {
     );
   `,
   ).run();
-
-  // Migration: Add description column to invoices if it doesn't exist
-  try {
-    db.prepare("ALTER TABLE invoices ADD COLUMN description TEXT").run();
-  } catch (_e) {
-    // Column already exists or other error we can ignore for this simple migration
-  }
 
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_invoices_user_id ON invoices(user_id);`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices(customer_id);`).run();

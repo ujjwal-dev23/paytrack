@@ -31,7 +31,7 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
   const handleSendReminder = async () => {
     setLoading(true);
     try {
-      await sendReminder(invoice.id);
+      await sendReminder(invoice.id, currency.value.symbol);
       alert("Reminder sent!");
     } catch (_err) {
       alert("Failed to send reminder");

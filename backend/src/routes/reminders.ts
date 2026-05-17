@@ -4,7 +4,8 @@ import { db } from "../db";
 import { ApiError } from "../utils/ApiError";
 import { protect } from "../middleware/auth";
 import type { AuthRequest } from "../middleware/auth";
-import type { Reminder, Invoice } from "../models";
+import type { Reminder } from "../models";
+import { sendInvoiceReminder } from "../services/email";
 
 const router = express.Router();
 
@@ -12,31 +13,68 @@ const router = express.Router();
 router.use(protect);
 
 /**
- * Create a new reminder log
+ * Create a new reminder log and send email
  * POST /api/reminders
  */
-router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { invoice_id } = req.body;
+router.post("/", async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const { invoice_id, currency_symbol } = req.body;
 
   if (!invoice_id) {
     return next(new ApiError(400, "Please provide invoice_id"));
   }
 
   try {
-    // 1. Check if invoice exists and belongs to user
-    const invoice = db.prepare("SELECT * FROM invoices WHERE id = ?").get(invoice_id) as
-      | Invoice
+    // 1. Fetch detailed data for email
+    const data = db
+      .prepare(
+        `
+      SELECT
+        i.amount, i.due_date,
+        c.username as customer_name, c.email as customer_email,
+        u.username as my_name, u.email as my_email, u.reminder_template
+      FROM invoices i
+      JOIN customers c ON i.customer_id = c.id
+      JOIN users u ON i.user_id = u.id
+      WHERE i.id = ?
+    `,
+      )
+      .get(invoice_id) as
+      | {
+          amount: number;
+          due_date: string;
+          customer_name: string;
+          customer_email: string;
+          my_name: string;
+          my_email: string;
+          reminder_template: string;
+        }
       | undefined;
 
-    if (!invoice) {
-      return next(new ApiError(404, "Invoice not found"));
+    if (!data) {
+      return next(new ApiError(404, "Invoice data not found"));
     }
 
-    if (invoice.user_id !== req.user!.id) {
-      return next(new ApiError(403, "You do not have permission to add reminders to this invoice"));
-    }
+    // 2. Interpolate template
+    const symbol = currency_symbol || "$";
+    const formattedAmount = `${symbol}${data.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+    const formattedDate = new Date(data.due_date).toLocaleDateString();
 
-    // 2. Create reminder
+    let emailText = data.reminder_template || "";
+    emailText = emailText
+      .replace(/{customer_name}/g, data.customer_name)
+      .replace(/{amount}/g, formattedAmount)
+      .replace(/{due_date}/g, formattedDate)
+      .replace(/{my_name}/g, data.my_name);
+
+    // 3. Send email via Resend
+    await sendInvoiceReminder({
+      to: data.customer_email,
+      replyTo: data.my_email,
+      subject: `Reminder: Invoice Payment Due (${formattedDate})`,
+      text: emailText,
+    });
+
+    // 4. Create reminder log only if email succeeded
     const stmt = db.prepare("INSERT INTO reminders (invoice_id) VALUES (?)");
     const info = stmt.run(invoice_id);
 

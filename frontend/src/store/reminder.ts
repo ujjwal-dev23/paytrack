@@ -29,10 +29,10 @@ export const fetchReminders = async () => {
   }
 };
 
-export const sendReminder = async (invoiceId: number) => {
+export const sendReminder = async (invoiceId: number, currencySymbol: string) => {
   const response = await apiFetch<ApiResponse<{ reminder: Reminder }>>("/reminders", {
     method: "POST",
-    data: { invoice_id: invoiceId },
+    data: { invoice_id: invoiceId, currency_symbol: currencySymbol },
   });
   if (response.status === "success") {
     reminders.value = [response.data.reminder, ...reminders.value];
