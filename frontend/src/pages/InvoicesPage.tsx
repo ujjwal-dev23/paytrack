@@ -41,7 +41,7 @@ export default function InvoicesPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h2 className="text-lg font-bold">Invoice Management</h2>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <div className="flex flex-1 gap-2">
+            <div className="flex flex-1 items-center gap-2">
               <div className="relative flex-1 sm:min-w-60">
                 <input
                   type="text"

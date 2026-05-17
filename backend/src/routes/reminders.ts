@@ -7,6 +7,19 @@ import type { AuthRequest } from "../middleware/auth";
 import type { Reminder } from "../models";
 import { sendInvoiceReminder } from "../services/email";
 
+interface BulkReminderData {
+  invoice_id: number;
+  amount: number;
+  due_date: string;
+  status: string;
+  description: string | null;
+  customer_name: string;
+  customer_email: string;
+  my_name: string;
+  my_email: string;
+  reminder_template: string;
+}
+
 const router = express.Router();
 
 // All reminder routes require authentication
@@ -162,7 +175,7 @@ router.post("/bulk", async (req: AuthRequest, res: Response, next: NextFunction)
       WHERE i.user_id = ? AND i.status != 'paid'
     `,
       )
-      .all(req.user!.id) as any[];
+      .all(req.user!.id) as BulkReminderData[];
 
     if (unpaidInvoices.length === 0) {
       return res.status(200).json({
