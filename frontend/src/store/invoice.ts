@@ -6,6 +6,7 @@ export type InvoiceStatus = "pending" | "paid" | "overdue";
 export interface Invoice {
   id: number;
   amount: number;
+  description: string | null;
   user_id: number;
   customer_id: number;
   due_date: string;
@@ -64,10 +65,18 @@ export const pagination = signal<PaginationMetadata>({
 export const stats = signal<InvoiceStats>({ total: 0, unpaid: 0 });
 export const filters = signal({ status: "all", search: "", startDate: "", endDate: "" });
 
+// Track the current fetch request to handle concurrency
+let currentFetchController: AbortController | null = null;
+
 // Actions
 export const fetchInvoices = async () => {
-  // Prevent concurrent fetches and redundant triggers
-  if (isInvoiceLoading.value) return;
+  // Cancel any pending request
+  if (currentFetchController) {
+    currentFetchController.abort();
+  }
+  
+  currentFetchController = new AbortController();
+  const { signal: abortSignal } = currentFetchController;
 
   try {
     isInvoiceLoading.value = true;
@@ -85,23 +94,13 @@ export const fetchInvoices = async () => {
 
     const response = await apiFetch<
       ApiResponse<{ invoices: Invoice[] }> & { pagination: PaginationMetadata; stats: InvoiceStats }
-    >(`/invoices?${queryParams.toString()}`);
+    >(`/invoices?${queryParams.toString()}`, { signal: abortSignal });
 
-    if (response.status === "success") {
+    if (response.status === "success" && !abortSignal.aborted) {
       invoices.value = response.data.invoices;
       
-      // Atomic update of metadata only if they changed
       if (response.pagination) {
-        const current = pagination.value;
-        const next = response.pagination;
-        if (
-          current.total !== next.total ||
-          current.totalPages !== next.totalPages ||
-          current.page !== next.page ||
-          current.limit !== next.limit
-        ) {
-          pagination.value = next;
-        }
+        pagination.value = response.pagination;
       }
       
       if (response.stats) {
@@ -109,9 +108,15 @@ export const fetchInvoices = async () => {
       }
     }
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return;
+    }
     invoiceError.value = err instanceof Error ? err.message : "Failed to fetch invoices";
   } finally {
-    isInvoiceLoading.value = false;
+    if (currentFetchController?.signal === abortSignal) {
+      isInvoiceLoading.value = false;
+      currentFetchController = null;
+    }
   }
 };
 
@@ -130,7 +135,6 @@ export const fetchDashboardStats = async () => {
 };
 
 export const createInvoice = async (data: Partial<Invoice>) => {
-  isInvoiceLoading.value = true;
   try {
     const response = await apiFetch<ApiResponse<{ invoice: Invoice }>>("/invoices", {
       method: "POST",
@@ -138,12 +142,13 @@ export const createInvoice = async (data: Partial<Invoice>) => {
     });
     if (response.status === "success") {
       // Refresh both to ensure UI consistency across pages
-      if (dashboardStats.value) fetchDashboardStats();
-      if (invoices.value.length > 0) fetchInvoices();
+      fetchDashboardStats();
+      fetchInvoices();
       return response.data.invoice;
     }
-  } finally {
-    isInvoiceLoading.value = false;
+  } catch (err) {
+    console.error("Failed to create invoice", err);
+    throw err;
   }
 };
 
@@ -155,8 +160,8 @@ export const updateInvoiceStatus = async (id: number, status: InvoiceStatus) => 
     });
     if (response.status === "success") {
       // Refresh both to ensure UI consistency across pages
-      if (dashboardStats.value) fetchDashboardStats();
-      if (invoices.value.length > 0) fetchInvoices();
+      fetchDashboardStats();
+      fetchInvoices();
     }
   } catch (err) {
     console.error("Failed to update status", err);
@@ -171,8 +176,8 @@ export const updateInvoice = async (id: number, data: Partial<Invoice>) => {
     });
     if (response.status === "success") {
       // Refresh both to ensure UI consistency across pages
-      if (dashboardStats.value) fetchDashboardStats();
-      if (invoices.value.length > 0) fetchInvoices();
+      fetchDashboardStats();
+      fetchInvoices();
       return response.data.invoice;
     }
   } catch (err) {
@@ -185,8 +190,8 @@ export const deleteInvoice = async (id: number) => {
   try {
     await apiFetch(`/invoices/${id}`, { method: "DELETE" });
     // Refresh both to ensure UI consistency across pages
-    if (dashboardStats.value) fetchDashboardStats();
-    if (invoices.value.length > 0) fetchInvoices();
+    fetchDashboardStats();
+    fetchInvoices();
   } catch (err) {
     console.error("Failed to delete invoice", err);
   }

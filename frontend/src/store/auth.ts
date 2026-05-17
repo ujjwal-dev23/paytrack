@@ -81,6 +81,24 @@ export const signup = async (userData: Record<string, string>) => {
 };
 
 /**
+ * Update user profile
+ */
+export const updateProfile = async (data: Record<string, string>) => {
+  try {
+    isAuthLoading.value = true;
+    const response = await apiFetch<ApiResponse<{ user: User }>>("/auth/me", {
+      method: "PATCH",
+      data,
+    });
+    if (response.status === "success" && response.data.user) {
+      user.value = response.data.user;
+    }
+  } finally {
+    isAuthLoading.value = false;
+  }
+};
+
+/**
  * Logout user
  */
 export const logout = async () => {

@@ -13,8 +13,10 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
   const [loading, setLoading] = useState(false);
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [isEditingAmount, setIsEditingAmount] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [newDueDate, setNewDueDate] = useState(invoice.due_date.split("T")[0]);
   const [newAmount, setNewAmount] = useState(invoice.amount.toString());
+  const [newDescription, setNewDescription] = useState(invoice.description || "");
 
   const handleStatusToggle = async () => {
     if (invoice.status === "paid") {
@@ -68,6 +70,18 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
     }
   };
 
+  const handleDescriptionUpdate = async () => {
+    setLoading(true);
+    try {
+      await updateInvoice(invoice.id, { description: newDescription });
+      setIsEditingDescription(false);
+    } catch (_err) {
+      alert("Failed to update description");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const statusColors = {
     paid: "bg-green-100 text-green-700",
     pending: "bg-yellow-100 text-yellow-700",
@@ -89,7 +103,7 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
                     type="number"
                     step="0.01"
                     min="0"
-                    className="input w-full min-w-[120px] py-1 pl-6 text-sm font-bold"
+                    className="input w-full min-w-30 py-1 pl-6 text-sm font-bold"
                     value={newAmount}
                     onInput={(e) => setNewAmount((e.target as HTMLInputElement).value)}
                     autoFocus
@@ -124,7 +138,7 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
                 </span>
                 <button
                   onClick={() => setIsEditingAmount(true)}
-                  className="text-text-muted group-hover:text-primary shrink-0 p-1 opacity-0 transition-colors group-hover:opacity-100"
+                  className="text-text-muted group-hover:text-primary shrink-0 p-1 opacity-100 transition-colors lg:opacity-0 lg:group-hover:opacity-100"
                   title="Edit Amount"
                 >
                   <svg
@@ -151,14 +165,70 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
             </span>
           </div>
           <div className="mt-1 flex min-w-0 flex-col">
+            {isEditingDescription ? (
+              <div className="flex min-w-0 items-center gap-2">
+                <input
+                  type="text"
+                  className="input w-full min-w-0 py-1 text-xs"
+                  placeholder="Add description..."
+                  value={newDescription}
+                  onInput={(e) => setNewDescription((e.target as HTMLInputElement).value)}
+                  autoFocus
+                />
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    onClick={handleDescriptionUpdate}
+                    disabled={loading}
+                    className="text-primary text-xs font-bold hover:underline"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingDescription(false);
+                      setNewDescription(invoice.description || "");
+                    }}
+                    className="text-text-muted text-xs hover:underline"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex min-w-0 items-center gap-1">
+                <span
+                  className={`truncate text-sm ${invoice.description ? "text-text-main font-medium" : "text-text-muted italic"}`}
+                  title={invoice.description || "No description"}
+                >
+                  {invoice.description || "No description"}
+                </span>
+                <button
+                  onClick={() => setIsEditingDescription(true)}
+                  className="text-text-muted group-hover:text-primary shrink-0 p-1 opacity-100 transition-colors lg:opacity-0 lg:group-hover:opacity-100"
+                  title="Edit Description"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
             <span
-              className="text-text-main truncate text-sm font-medium"
+              className="text-text-muted truncate text-[10px]"
               title={invoice.customer_name || "Unknown Customer"}
             >
-              {invoice.customer_name || "Unknown Customer"}
-            </span>
-            <span className="text-text-muted truncate text-xs" title={invoice.customer_email}>
-              {invoice.customer_email}
+              Client: {invoice.customer_name || "Unknown Customer"} ({invoice.customer_email})
             </span>
           </div>
         </div>
@@ -193,7 +263,7 @@ export function InvoiceItem({ invoice }: InvoiceItemProps) {
               </span>
               <button
                 onClick={() => setIsEditingDate(true)}
-                className="text-text-muted group-hover:text-primary p-1 transition-colors"
+                className="text-text-muted group-hover:text-primary shrink-0 p-1 opacity-100 transition-colors lg:opacity-0 lg:group-hover:opacity-100"
                 title="Change Due Date"
               >
                 <svg

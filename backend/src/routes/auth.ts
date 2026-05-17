@@ -52,19 +52,17 @@ router.post("/signup", async (req, res, next) => {
   try {
     const hashedPassword = await bcrypt.hash(password, process.env.BCRYPT_SALT || 10);
 
-    const stmt = db.prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
+    const stmt = db.prepare(
+      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+    );
 
     const info = stmt.run(username, email, hashedPassword);
     const userId = Number(info.lastInsertRowid);
 
-    const user: Omit<User, "password"> = {
-      id: userId,
-      username,
-      email,
-      reminder_template: null,
-    };
+    // Fetch the user to get the database-generated default reminder_template
+    const newUser = db.prepare("SELECT id, username, email, reminder_template FROM users WHERE id = ?").get(userId) as Omit<User, "password">;
 
-    sendToken(user, 201, res);
+    sendToken(newUser, 201, res);
   } catch (error) {
     if (
       error &&
@@ -132,6 +130,63 @@ router.get("/me", protect, (req: AuthRequest, res) => {
       user: req.user,
     },
   });
+});
+
+/**
+ * Update current user profile
+ * PATCH /api/auth/me
+ */
+router.patch("/me", protect, async (req: AuthRequest, res, next) => {
+  const { username, password, reminder_template } = req.body;
+
+  try {
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    if (username) {
+      updates.push("username = ?");
+      params.push(username);
+    }
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, process.env.BCRYPT_SALT || 10);
+      updates.push("password = ?");
+      params.push(hashedPassword);
+    }
+
+    if (reminder_template !== undefined) {
+      updates.push("reminder_template = ?");
+      params.push(reminder_template);
+    }
+
+    if (updates.length === 0) {
+      return next(new ApiError(400, "Please provide username, password, or reminder_template to update"));
+    }
+
+    const sql = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
+    params.push(req.user!.id);
+
+    db.prepare(sql).run(...params);
+
+    const updatedUser = db.prepare("SELECT id, username, email, reminder_template FROM users WHERE id = ?").get(req.user!.id) as Omit<User, "password">;
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: updatedUser,
+      },
+    });
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "SQLITE_CONSTRAINT_UNIQUE"
+    ) {
+      return next(new ApiError(400, "Username already exists"));
+    }
+    next(error);
+  }
 });
 
 export default router;

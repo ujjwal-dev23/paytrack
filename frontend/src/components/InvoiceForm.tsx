@@ -67,6 +67,7 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
     const formData = new FormData(e.target as HTMLFormElement);
     const data = {
       amount: Number(formData.get("amount")),
+      description: formData.get("description") as string,
       customer_id: Number(customerId),
       due_date: formData.get("due_date") as string,
       status: "pending" as const,
@@ -98,6 +99,15 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
         min="0"
         required
         placeholder="100.00"
+        disabled={isCreatingCustomer}
+        className={isCreatingCustomer ? "opacity-60 transition-opacity" : "transition-opacity"}
+      />
+
+      <Input
+        label="Description (Optional)"
+        type="text"
+        name="description"
+        placeholder="e.g. Website Design, Consulting Services"
         disabled={isCreatingCustomer}
         className={isCreatingCustomer ? "opacity-60 transition-opacity" : "transition-opacity"}
       />

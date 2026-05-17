@@ -153,9 +153,9 @@ export default function Home() {
                 <p className="text-text-muted text-sm">All caught up! No urgent invoices.</p>
               </div>
             ) : (
-              stats.needsAttention.map((invoice) => (
-                <InvoiceItem key={invoice.id} invoice={invoice} />
-              ))
+              stats.needsAttention
+                .slice(0, 3)
+                .map((invoice) => <InvoiceItem key={invoice.id} invoice={invoice} />)
             )}
           </div>
         </div>
@@ -171,7 +171,10 @@ export default function Home() {
             ) : (
               <div className="divide-border divide-y">
                 {stats.topDebtors.map((debtor) => (
-                  <div key={debtor.id} className="flex min-w-0 items-center justify-between gap-4 p-4">
+                  <div
+                    key={debtor.id}
+                    className="flex min-w-0 items-center justify-between gap-4 p-4"
+                  >
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-sm font-bold" title={debtor.username}>
                         {debtor.username}
@@ -181,7 +184,7 @@ export default function Home() {
                       </span>
                     </div>
                     <span
-                      className="min-w-0 shrink-1 truncate text-sm font-bold text-red-600"
+                      className="min-w-0 shrink truncate text-sm font-bold text-red-600"
                       title={formatAmount(debtor.total_unpaid)}
                     >
                       {formatAmount(debtor.total_unpaid)}

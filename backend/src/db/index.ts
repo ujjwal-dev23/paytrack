@@ -7,6 +7,15 @@ const db = new Database(DB_PATH);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
+const DEFAULT_REMINDER_TEMPLATE = `Hi {customer_name},
+
+This is a friendly reminder that your invoice for {amount} is due on {due_date}.
+
+Please ensure payment is made at your earliest convenience.
+
+Best regards,
+{my_name}`;
+
 const initDb = () => {
   // Users table
   db.prepare(
@@ -16,11 +25,16 @@ const initDb = () => {
       username TEXT NOT NULL UNIQUE,
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
-      reminder_template TEXT,
+      reminder_template TEXT DEFAULT '${DEFAULT_REMINDER_TEMPLATE.replace(/'/g, "''")}',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `,
   ).run();
+
+  // Migration: Ensure existing users have the default template if null or empty
+  db.prepare(
+    `UPDATE users SET reminder_template = ? WHERE reminder_template IS NULL OR reminder_template = ''`,
+  ).run(DEFAULT_REMINDER_TEMPLATE);
 
   // Customers table - optimized with index on user_id
   db.prepare(
@@ -45,6 +59,7 @@ const initDb = () => {
     CREATE TABLE IF NOT EXISTS invoices (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       amount INTEGER NOT NULL,
+      description TEXT,
       user_id INTEGER NOT NULL,
       customer_id INTEGER NOT NULL,
       due_date DATETIME NOT NULL,
@@ -55,6 +70,13 @@ const initDb = () => {
     );
   `,
   ).run();
+
+  // Migration: Add description column to invoices if it doesn't exist
+  try {
+    db.prepare("ALTER TABLE invoices ADD COLUMN description TEXT").run();
+  } catch (_e) {
+    // Column already exists or other error we can ignore for this simple migration
+  }
 
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_invoices_user_id ON invoices(user_id);`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices(customer_id);`).run();

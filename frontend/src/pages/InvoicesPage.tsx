@@ -23,10 +23,6 @@ export default function InvoicesPage() {
     }
   }, [isAuthenticated.value, filters.value, pagination.value.page]);
 
-  if (!isAuthenticated.value) {
-    return null; // Layout.tsx handles auth redirect/messaging if needed, or we just show nothing
-  }
-
   const hasActiveAdvancedFilters = !!(filters.value.startDate || filters.value.endDate);
 
   return (

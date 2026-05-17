@@ -255,7 +255,7 @@ router.get("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
  * POST /api/invoices
  */
 router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
-  const { amount, customer_id, due_date, status } = req.body;
+  const { amount, description, customer_id, due_date, status } = req.body;
 
   if (amount === undefined || amount === null || !customer_id || !due_date) {
     return next(new ApiError(400, "Please provide amount, customer_id, and due_date"));
@@ -282,10 +282,10 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
     }
 
     const stmt = db.prepare(
-      "INSERT INTO invoices (amount, user_id, customer_id, due_date, status) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO invoices (amount, description, user_id, customer_id, due_date, status) VALUES (?, ?, ?, ?, ?, ?)",
     );
 
-    const info = stmt.run(amount, req.user!.id, customer_id, due_date, finalStatus);
+    const info = stmt.run(amount, description || null, req.user!.id, customer_id, due_date, finalStatus);
 
     const newInvoice = db
       .prepare(
@@ -313,7 +313,7 @@ router.post("/", (req: AuthRequest, res: Response, next: NextFunction) => {
  */
 router.patch("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const { amount, customer_id, due_date, status } = req.body;
+  const { amount, description, customer_id, due_date, status } = req.body;
 
   if (amount !== undefined && amount !== null && Number(amount) < 0) {
     return next(new ApiError(400, "Amount cannot be negative"));
@@ -345,17 +345,35 @@ router.patch("/:id", (req: AuthRequest, res: Response, next: NextFunction) => {
     }
 
     // 2. Perform update
-    const stmt = db.prepare(`
-      UPDATE invoices
-      SET
-        amount = COALESCE(?, amount),
-        customer_id = COALESCE(?, customer_id),
-        due_date = COALESCE(?, due_date),
-        status = COALESCE(?, status)
-      WHERE id = ?
-    `);
+    const updates: string[] = [];
+    const params: unknown[] = [];
 
-    stmt.run(amount, customer_id, due_date, status, id);
+    if (amount !== undefined) {
+      updates.push("amount = ?");
+      params.push(amount);
+    }
+    if (description !== undefined) {
+      updates.push("description = ?");
+      params.push(description);
+    }
+    if (customer_id !== undefined) {
+      updates.push("customer_id = ?");
+      params.push(customer_id);
+    }
+    if (due_date !== undefined) {
+      updates.push("due_date = ?");
+      params.push(due_date);
+    }
+    if (status !== undefined) {
+      updates.push("status = ?");
+      params.push(status);
+    }
+
+    if (updates.length > 0) {
+      const sql = `UPDATE invoices SET ${updates.join(", ")} WHERE id = ?`;
+      params.push(id);
+      db.prepare(sql).run(...params);
+    }
 
     // 3. Auto-update to overdue if needed after update
     const today = new Date().toISOString().split("T")[0];

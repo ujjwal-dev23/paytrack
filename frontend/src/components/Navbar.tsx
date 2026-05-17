@@ -80,7 +80,7 @@ export function Navbar() {
                       <p className="text-text-muted mb-2 text-[10px] font-bold tracking-wider uppercase">
                         Currency Preference
                       </p>
-                      <div className="grid grid-cols-2 gap-1">
+                      <div class="grid grid-cols-2 gap-1">
                         {CURRENCIES.map((c) => (
                           <button
                             key={c.code}
@@ -99,11 +99,31 @@ export function Navbar() {
                           </button>
                         ))}
                       </div>
-                    </div>
-                    <button
+                      </div>
+                      <a
+                      href="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex w-full items-center px-4 py-3 text-left text-sm font-medium text-text-main transition-colors hover:bg-primary/5"
+                      >
+                      <svg
+                        className="mr-2 h-4 w-4 text-text-muted"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      Profile Settings
+                      </a>
+                      <button
                       onClick={handleLogout}
-                      className="flex w-full items-center px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                    >
+                      className="flex w-full items-center px-4 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 border-t border-border"
+                      >
                       <svg
                         className="mr-2 h-4 w-4"
                         fill="none"

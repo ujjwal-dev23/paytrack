@@ -3,6 +3,7 @@ export type InvoiceStatus = "pending" | "paid" | "overdue";
 export interface Invoice {
   id: number;
   amount: number;
+  description: string | null;
   user_id: number;
   customer_id: number;
   due_date: string;
