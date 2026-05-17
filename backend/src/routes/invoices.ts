@@ -60,11 +60,11 @@ router.get("/", (req: AuthRequest, res: Response, next: NextFunction) => {
     }
 
     if (search) {
-      query += ` AND (c.username LIKE ? OR c.email LIKE ?)`;
-      countQuery += ` AND (c.username LIKE ? OR c.email LIKE ?)`;
+      query += ` AND (c.username LIKE ? OR c.email LIKE ? OR i.description LIKE ?)`;
+      countQuery += ` AND (c.username LIKE ? OR c.email LIKE ? OR i.description LIKE ?)`;
       const searchParam = `%${search}%`;
-      queryParams.push(searchParam, searchParam);
-      countParams.push(searchParam, searchParam);
+      queryParams.push(searchParam, searchParam, searchParam);
+      countParams.push(searchParam, searchParam, searchParam);
     }
 
     if (startDate) {

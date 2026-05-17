@@ -45,7 +45,7 @@ export default function InvoicesPage() {
               <div className="relative flex-1 sm:min-w-[240px]">
                 <input
                   type="text"
-                  placeholder="Search customers..."
+                  placeholder="Search customers or descriptions..."
                   className="input-field py-1.5 pl-8 text-xs"
                   value={filters.value.search}
                   onInput={(e) => {

@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { user, updateProfile } from "../store/auth";
+import { user, updateProfile, logout } from "../store/auth";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 
@@ -19,7 +19,14 @@ export default function ProfilePage() {
 
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirm_password") as string;
     const reminder_template = formData.get("reminder_template") as string;
+
+    if (password && password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
 
     if (username !== user.value?.username) data.username = username;
     if (password) data.password = password;
@@ -33,6 +40,14 @@ export default function ProfilePage() {
 
     try {
       await updateProfile(data);
+      
+      if (data.password) {
+        // Automatically logout if password was changed
+        alert("Password updated successfully. Please log in again with your new password.");
+        await logout();
+        return;
+      }
+
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
@@ -64,12 +79,23 @@ export default function ProfilePage() {
               disabled
               title="Email cannot be changed"
             />
-            <Input
-              label="New Password"
-              name="password"
-              type="password"
-              placeholder="Leave blank to keep current"
-            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                label="New Password"
+                name="password"
+                type="password"
+                placeholder="Leave blank to keep current"
+              />
+              <Input
+                label="Confirm New Password"
+                name="confirm_password"
+                type="password"
+                placeholder="Confirm your new password"
+              />
+            </div>
+            <p className="text-[10px] text-text-muted italic">
+              Note: You will be automatically logged out after changing your password.
+            </p>
           </div>
 
           <div className="space-y-4 border-t border-border pt-6">
