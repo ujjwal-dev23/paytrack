@@ -31,6 +31,12 @@ export default function ProfilePage() {
       return;
     }
 
+    if (password && password.length < 3) {
+      setError("Password must be at least 3 characters long");
+      setLoading(false);
+      return;
+    }
+
     if (username !== user.value?.username) data.username = username;
     if (password) data.password = password;
     if (reminder_template !== user.value?.reminder_template)
@@ -90,12 +96,14 @@ export default function ProfilePage() {
                 name="password"
                 type="password"
                 placeholder="Leave blank to keep current"
+                minLength={3}
               />
               <Input
                 label="Confirm New Password"
                 name="confirm_password"
                 type="password"
                 placeholder="Confirm your new password"
+                minLength={3}
               />
             </div>
             <p className="text-[10px] text-text-muted italic">

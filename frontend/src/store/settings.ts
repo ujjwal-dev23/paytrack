@@ -10,7 +10,7 @@ export const CURRENCIES: Currency[] = [
   { symbol: "₹", code: "INR", label: "Indian Rupee" },
   { symbol: "$", code: "USD", label: "US Dollar" },
   { symbol: "€", code: "EUR", label: "Euro" },
-  { symbol: "£", code: "GBP", label: "British Pound" },
+  { symbol: "£", code: "GBP", label: "Pound" },
 ];
 
 // Initialize from localStorage if available, default to INR

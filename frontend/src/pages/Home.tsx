@@ -77,8 +77,8 @@ export default function Home() {
         </a>
       </header>
 
-      {/* Financial Health Row */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      {/* Financial Health Row - Using md:grid-cols-3 and gap-8 for perfect alignment */}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="card overflow-hidden px-4 py-6 text-center">
           <span
             className="block truncate text-3xl font-extrabold text-green-600"
@@ -138,9 +138,9 @@ export default function Home() {
         </a>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Action Center: Needs Attention */}
-        <div className="space-y-4 lg:col-span-2">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        {/* Action Center: Needs Attention - spans 2 columns */}
+        <div className="space-y-4 md:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Needs Attention</h2>
             <a href="/invoices" className="text-primary text-xs font-bold hover:underline">
@@ -160,7 +160,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Top Debtors */}
+        {/* Top Debtors - aligned under the 3rd metric card */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold">Top Debtors</h2>
           <div className="card overflow-hidden p-0">

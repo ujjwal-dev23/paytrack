@@ -49,6 +49,10 @@ router.post("/signup", async (req, res, next) => {
     return next(new ApiError(400, "Please provide username, email, and password"));
   }
 
+  if (password.length < 3) {
+    return next(new ApiError(400, "Password must be at least 3 characters long"));
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(password, process.env.BCRYPT_SALT || 10);
 
@@ -149,6 +153,9 @@ router.patch("/me", protect, async (req: AuthRequest, res, next) => {
     }
 
     if (password) {
+      if (password.length < 3) {
+        return next(new ApiError(400, "Password must be at least 3 characters long"));
+      }
       const hashedPassword = await bcrypt.hash(password, process.env.BCRYPT_SALT || 10);
       updates.push("password = ?");
       params.push(hashedPassword);

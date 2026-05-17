@@ -24,6 +24,12 @@ export default function SignupPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
+    if (password.length < 3) {
+      setError("Password must be at least 3 characters long");
+      setLoading(false);
+      return;
+    }
+
     try {
       await signup({ username, email, password });
       route("/");
@@ -66,6 +72,7 @@ export default function SignupPage() {
             placeholder="••••••••"
             required
             autoComplete="new-password"
+            minLength={3}
           />
 
           {error && (
